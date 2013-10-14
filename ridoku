@@ -159,7 +159,7 @@ end
 
 fetch_stack(client, @config[:app])
 
-load "#{File.dirname(__FILE__)}/.ridoku/#{@config[:command][0]}.rb"
+load "#{File.dirname(__FILE__)}/lib/#{@config[:command][0]}.rb"
 
 unless defined?(:run_command)
   $stderr.puts "Invalid command specified: #{@config[:command][0]}"
