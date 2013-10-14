@@ -1,0 +1,165 @@
+#!/usr/bin/env ruby
+
+require 'aws'
+require 'logger'
+require 'json'
+require 'awesome_print'
+require 'getoptlong'
+
+require "#{File.dirname(__FILE__)}/ridoku/base.rb"
+
+Dir.glob("#{File.dirname(__FILE__)}/ridoku/*.rb") do |class_file|
+  require class_file
+end
+
+RUNCOM = "#{File.dirname(__FILE__)}/.ridokurc"
+
+config = {
+  access_key_id: ENV['AWS_ACCESS_KEY'],
+  secret_access_key: ENV['AWS_SECRET_KEY']
+}
+
+def print_help
+  $stderr.puts <<-EOF
+  usage: ridoku [OPTIONS] command [command options]
+    [--] is used to separate arguments from ridoku for each command
+      e.g.,  'ridoku list-apps --help' display this help.
+             'ridoku -- list-apps --help' displays list-apps help.
+
+    commands:
+      list
+      config
+      deploy
+      domains
+      db
+      run
+      cook
+  EOF
+end
+
+class IO
+  def colorize(input, args)
+    arr = Array[args]
+    colors = {
+      black: ["\033[30m", "\033[0m"],
+      red: ["\033[31m", "\033[0m"],
+      green: ["\033[32m", "\033[0m"],
+      brown: ["\033[33m", "\033[0m"],
+      blue: ["\033[34m", "\033[0m"],
+      magenta: ["\033[35m", "\033[0m"],
+      cyan: ["\033[36m", "\033[0m"],
+      gray: ["\033[37m", "\033[0m"],
+      bg_black: ["\033[40m", "\0330m"],
+      bg_red: ["\033[41m", "\033[0m"],
+      bg_green: ["\033[42m", "\033[0m"],
+      bg_brown: ["\033[43m", "\033[0m"],
+      bg_blue: ["\033[44m", "\033[0m"],
+      bg_magenta: ["\033[45m", "\033[0m"],
+      bg_cyan: ["\033[46m", "\033[0m"],
+      bg_gray: ["\033[47m", "\033[0m"],
+      bold: ["\033[1m", "\033[22m"],
+      reverse_color: ["\033[7m", "\033[27m"]
+    }
+    return input unless self.isatty
+
+    arr.each do |ar|
+      next unless colors.key?(ar)
+      input = "#{colors[ar].first}#{input}#{colors[ar].last}"
+    end
+
+    input
+  end
+end
+
+opts = GetoptLong.new(
+  [ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
+  [ '--key', '-k', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--secret', '-s', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--set-default-app', '-D', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT]
+)
+
+Ridoku::Base.load_config(RUNCOM)
+
+opts.each do |opt, arg|
+  case opt
+  when '--debug'
+    Ridoku::Base.config[:debug] = true
+
+  when '--key'
+    ENV['AWS_ACCESS_KEY'] = arg
+
+  when '--secret'
+    ENV['AWS_SECRET_KEY'] = arg
+
+  when '--set-default-app'
+    Ridoku::Base.config['app'] = arg
+    Ridoku::Base.save_config(RUNCOM)
+
+    puts "Default app name set to: #{Ridoku::Base.config['app']}"
+    exit 0
+
+  when '--app'
+    Ridoku::Base.config[:app] = arg
+
+  else
+    print_help
+    exit 1
+  end
+end
+
+unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
+  puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
+  print_help
+  exit 1
+end
+
+unless Ridoku::Base.config[:app]
+  puts 'No app specified. Use the `list` command to see all apps.'
+  print_help
+  exit 1
+end
+
+unless ARGV.length > 0
+  puts 'No arguments specified.'
+  print_help
+  exit 1
+end
+
+if Ridoku::Base.config[:debug]
+  # log to standard out, strip all of the Ruby logger standard prefixes
+  logger = Logger.new($stdout)
+  logger.formatter = proc { |severity, datetime, progname, msg| msg }
+
+  config.merge!({
+    logger: logger,
+    log_formatter: AWS::Core::LogFormatter.colored,
+    http_wire_trace: true
+  })
+end
+
+AWS.config(config)
+
+opsworks = AWS::OpsWorks.new
+client = opsworks.client
+
+Ridoku::Base.aws_client = client
+Ridoku::Base.config[:command] = ARGV.shift.split(':')
+
+if Ridoku::Base.config[:command][0] == 'help'
+  print_help
+  exit 0
+end
+
+begin
+  command = Ridoku.const_get(
+    Ridoku::Base.config[:command].first.capitalize
+  ).new
+rescue => e
+  $stderr.puts "Invalid command specified: #{Ridoku::Base.config[:command][0]}"
+  puts e.to_s if Ridoku::Base.config[:debug]
+  print_help
+  exit 1
+end
+
+command.run
