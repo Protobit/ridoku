@@ -123,6 +123,12 @@ end
 
 unless @config[:app]
   puts 'No app specified. Use the `list-apps` command to see all apps.'
+  p1yrint_help
+  exit 1
+end
+
+unless ARGV.length > 0
+  puts 'No arguments specified.'
   print_help
   exit 1
 end
