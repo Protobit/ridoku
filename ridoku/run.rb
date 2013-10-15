@@ -53,7 +53,7 @@ module Ridoku
       
       if Base.permissions[:permissions].first[:allow_sudo]
         chdir = "cd /srv/www/#{Base.app[:shortname]}/current"
-        prefix = "sudo su -c "
+        prefix = "sudo su deploy -c "
         prompt_cmd = "PROMPT_COMMAND='#{chdir}'"
       else
         prompt_cmd = ''
