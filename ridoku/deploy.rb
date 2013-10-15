@@ -7,6 +7,7 @@ require "#{File.dirname(__FILE__)}/base.rb"
 module Ridoku
   class Deploy < Base
     attr_accessor :app
+
     def run
       Base.fetch_stack
 
@@ -20,7 +21,6 @@ module Ridoku
         info
       else
         print_deploy_help
-        exit 1
       end
     end
 

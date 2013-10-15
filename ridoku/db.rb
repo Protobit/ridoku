@@ -22,26 +22,16 @@ module Ridoku
       case sub_command
       when 'list', nil, 'info'
         list(false)
-
       when 'credentials'
         list(true)
-
       when 'set', 'add'
         set
-
       when 'delete', 'remove', 'rm'
         delete
-
       when 'url', 'path'
         url(sub_sub_command)
-
-      when 'help', '?'
-        print_config_help
-
       else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
         print_db_help
-        exit 1
       end
     end
 

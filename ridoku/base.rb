@@ -31,6 +31,10 @@ module Ridoku
 
       def fetch_stack(options = {})
         return stack if stack && !options[:force]
+
+        opsworks = AWS::OpsWorks.new
+        Ridoku::Base.aws_client = opsworks.client
+
         stack_name = config[:stack]
 
         fail NoStackSpecified.new unless stack_name
@@ -94,23 +98,43 @@ module Ridoku
         aws_client.update_app(save_info)
       end
 
-      def fetch_layers
+      def fetch_layers(shortname = :all, options = {})
         return layers if layers && !options[:force]
         fetch_stack
-        self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])
+        self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])[:layers]
+        self.layers.select! { |layer| layer[:shortname] == shortname } if shortname != :all
       end
+
+      def save_layer(layer, values)
+        values = [values] unless values.is_a?(Array)
+
+        return unless values.length > 0
+
+        save_info = {
+          layer_id: layer[:layer_id]
+        }
+
+        save_info.tap do |info|
+          values.each do |val|
+            info[val] = layer[val]
+          end
+        end
+
+        aws_client.update_layer(save_info)
+      end
+
 
       # 'lb' - load balancing layers
       # 'rails-app'
       # 'custom'
-      def fetch_instances(type = :all, options = {})
+      def fetch_instances(shortname = :all, options = {})
         return instances if instances && !options[:force]
-        if type != :all
+        if shortname != :all
           fetch_layers
           self.instances = []
 
           layers[:layers].each do |layer|
-            if layer[:type] == type
+            if layer[:shortname] == shortname
               instance = aws_client.describe_instances(
                 layer_id: layer[:layer_id])
               self.instances << instance[:instances]
@@ -125,6 +149,10 @@ module Ridoku
 
       def fetch_account(options = {})
         return account if account && !options[:force]
+
+        iam = AWS::IAM.new
+        self.iam_client = iam.client
+
         self.account = iam_client.get_user
       end
 
@@ -165,7 +193,7 @@ module Ridoku
         inststr = []
         Ridoku::Base.instances.each do |inst|
           val = "#{inst[:hostname]} [#{inst[:status]}]"
-          inststr << io.colorize(val, [:bold, inst[:status] == 'online' ? :green : :red])
+          inststr << io.colorize(val, [ :bold, inst[:status] == 'online' ? :green : :red ])
         end
         inststr
       end

@@ -17,17 +17,12 @@ module Ridoku
       case sub_command
       # when 'list', nil
       #   list
-
       # when 'update'
       #   update
-
       when 'run'
         cook
-
       else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
         print_cook_help
-        exit 1
       end
     end
 

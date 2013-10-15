@@ -7,13 +7,34 @@ require "#{File.dirname(__FILE__)}/base.rb"
 module Ridoku
   class Domain < Base
     attr_accessor :domains
+
+    def run
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+
+      environment = load_environment
+
+      case sub_command
+      when 'list', nil
+        list
+      when 'set', 'add'
+        add
+      when 'delete', 'remove', 'rm'
+        delete
+      else
+        print_domain_help
+      end
+    end
+
+    protected
+
     def load_environment
       Base.fetch_app
 
       self.domains = Base.app[:domains]
     end
 
-    def print_env_help
+    def print_domain_help
       $stderr.puts <<-EOF
     Command: domain
 
@@ -65,32 +86,6 @@ module Ridoku
       end
       
       Base.save_app(:domains)
-    end
-
-    def run
-      command = Base.config[:command]
-      sub_command = (command.length > 0 && command[1]) || nil
-
-      environment = load_environment
-
-      case sub_command
-      when 'list', nil
-        list
-
-      when 'set', 'add'
-        add
-
-      when 'delete', 'remove', 'rm'
-        delete
-
-      when 'help'
-        print_env_help
-
-      else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
-        print_env_help
-        exit 1
-      end
     end
   end
 end

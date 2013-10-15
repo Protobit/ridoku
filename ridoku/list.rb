@@ -23,6 +23,9 @@ module Ridoku
       when 'apps'
         apps
 
+      when 'layers'
+        layers
+
       when 'config'
         config
 
@@ -42,6 +45,7 @@ module Ridoku
        list:config lists current configuration information (app, stack, etc)
        list:stacks lists stacks by name
        list:apps   lists apps if stack is specified
+       list:apps   lists layers if stack is specified
       EOF
     end
 
@@ -79,6 +83,32 @@ module Ridoku
       $stdout.puts "Application apps on your account for stack: " +
         "#{$stdout.colorize(Base.stack[:name], :bold)}"
       $stdout.puts " #{$stdout.colorize(list, :bold)}"
+    end
+
+    def layers
+      Base.fetch_stack
+
+      layers = Base.aws_client.describe_layers(stack_id: Base.stack[:stack_id])
+
+      max = 0
+      layers[:layers].each do |layer|
+        shortname = $stdout.colorize(layer[:shortname], :bold)
+        max = shortname.length if max < shortname.length
+      end
+
+      layer_arr = layers[:layers].map do |layer|
+        fmt = "%#{max}s"
+        shortname = sprintf(fmt, $stdout.colorize(layer[:shortname], :bold))
+        name = "[#{shortname}] #{layer[:name]}"
+        if layer[:shortname] == Base.config[:layer]
+          $stdout.colorize(name, :green) 
+        else
+          name
+        end
+      end
+
+      $stdout.puts 'Application layers on your account:'
+      $stdout.puts layer_arr
     end
   end
 end

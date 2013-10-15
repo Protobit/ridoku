@@ -15,14 +15,10 @@ module Ridoku
       case sub_command
       when 'command', nil
         run_command
-
       when 'shell'
         shell
-
       else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
         print_cook_help
-        exit 1
       end
     end
 

@@ -106,6 +106,7 @@ opts = GetoptLong.new(
   [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT ],
 )
 
 Ridoku::Base.load_config(RUNCOM)
@@ -140,6 +141,9 @@ opts.each do |opt, arg|
 
   when '--user'
     Ridoku::Base.config[:shell_user] = arg
+
+  when '--layer'
+    Ridoku::Base.config[:layer] = arg
 
   when '--app'
     Ridoku::Base.config[:app] = arg
@@ -209,11 +213,6 @@ end
 
 AWS.config(config)
 
-opsworks = AWS::OpsWorks.new
-Ridoku::Base.aws_client = opsworks.client
-
-iam = AWS::IAM.new
-Ridoku::Base.iam_client = iam.client
 Ridoku::Base.config[:command] = ARGV.shift.split(':')
 
 if Ridoku::Base.config[:command][0] == 'help'

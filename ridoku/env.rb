@@ -11,7 +11,27 @@ require "#{File.dirname(__FILE__)}/base.rb"
 module Ridoku
   class Env < Base
     attr_accessor :environment
-    
+
+    def run
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+
+      environment = load_environment
+
+      case sub_command
+      when 'list', nil
+        list
+      when 'set', 'add'
+        set
+      when 'delete', 'remove', 'rm'
+        delete
+      else
+        print_env_help
+      end
+    end
+
+    protected
+
     def load_environment
       Base.fetch_stack
 
@@ -73,30 +93,6 @@ module Ridoku
       end
       
       Base.save_stack
-    end
-
-    def run
-      command = Base.config[:command]
-      sub_command = (command.length > 0 && command[1]) || nil
-
-      environment = load_environment
-
-      case sub_command
-      when 'list', nil
-        list
-      when 'set', 'add'
-        set
-      when 'delete', 'remove', 'rm'
-        delete
-
-      when 'help'
-        print_env_help
-
-      else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
-        print_env_help
-        exit 1
-      end
     end
   end
 end
