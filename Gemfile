@@ -9,8 +9,5 @@ gem 'aws-sdk'
 # JSON.load for the config file and for processing OpsWorks output.
 gem 'json'
 
-# Used for debug messages
-gem 'awesome_print'
-
 # Used for interacting with git
 gem 'rugged'

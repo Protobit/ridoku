@@ -3,14 +3,19 @@
 require 'aws'
 require 'logger'
 require 'json'
-require 'awesome_print'
 require 'getoptlong'
 
-require "ridoku/base.rb"
+require 'io-colorize'
 
-Dir.glob("ridoku/*.rb") do |class_file|
-  require class_file
-end
+require 'ridoku/base'
+require 'ridoku/cook'
+require 'ridoku/db'
+require 'ridoku/deploy'
+require 'ridoku/domain'
+require 'ridoku/env'
+require 'ridoku/list'
+require 'ridoku/packages'
+require 'ridoku/run'
 
 RUNCOM = "#{ENV['HOME']}/.ridokurc"
 
