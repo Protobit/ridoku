@@ -28,6 +28,11 @@ environment information, as well as running recipes and commands on the stack.
 
 Sadly, at this point, the OpsWorks GUI is still required.
 
+## Custom Cookbooks
+
+Currently, the Ridoku custom cookbooks are also required to ensure that the
+environment is the same as is expected by a Heroku application.
+
 ## *ridoku*
 
 ```

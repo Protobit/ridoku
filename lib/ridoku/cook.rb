@@ -17,8 +17,8 @@ module Ridoku
       case sub_command
       # when 'list', nil
       #   list
-      # when 'update'
-      #   update
+      when 'update'
+        update
       when 'run'
         cook
       else
@@ -28,21 +28,38 @@ module Ridoku
 
     protected
 
+    def extract_instance_ids
+      Base.fetch_instances(Base.config[:layers] || 'rails-app') unless
+        Base.instances
+
+      instances = Base.instances.select do |inst|
+         inst[:status] == 'online'
+      end
+
+      instances.map do |inst|
+        inst[:instance_id]
+      end
+    end
+
     def list
       update unless File.exists?(cookbook_path)
     end
 
-    def cookbook_path
-      fail NoStackSpecified.new unless Base.stack
-
-      @path ||= "#{File.dirname(__FILE__)}/.cookbook-#{Base.stack[:name]}/"
-      @path
-    end
-
     def update
-      # cookbook = cookbook_path
-      # gitrepo = Base.stack[:custom_cookbooks_source][:url]
-      # gitrevision = Base.stack[:custom_cookbooks_source][:revision]
+      deployment = {
+        instance_ids: extract_instance_ids,
+        command: {
+          name: 'update_custom_cookbooks'
+        }
+      }
+
+      deployment.tap do |dep|
+        dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
+      end
+
+      $stdout.puts "Updating custom cookbooks..."
+
+      Base.deploy(deployment)
     end
 
     def valid_recipe_format?
@@ -63,23 +80,19 @@ module Ridoku
         exit 1
       end
 
-      Base.fetch_instances('rails-app') unless Base.instances
-
-      instances = Base.instances.select do |inst|
-         inst[:status] == 'online'
-      end
-
-      instance_ids = instances.map do |inst|
-        inst[:instance_id]
-      end
+      instance_ids = extract_instance_ids
 
       if instance_ids.length == 0
         $stderr.puts 'No valid instances available.'
         exit 1
       end
 
+      $stdout.puts "Running recipes:"
+      ARGV.each do |arg|
+        $stdout.puts "  #{$stdout.colorize(arg, :green)}"
+      end
+
       deployment = {
-        stack_id: Base.stack[:stack_id],
         instance_ids: instance_ids,
         command: {
           name: 'execute_recipes',
@@ -100,7 +113,8 @@ module Ridoku
 
   List/Modify the current app's associated domains.
     cook:run      run a specific or set of 'cookbook::recipe'
-      EOF
+    cook:update   update the specified instance 'cookboooks'
+  EOF
     end
   end
 end

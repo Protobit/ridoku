@@ -15,8 +15,6 @@ module Ridoku
       case sub_command
       when 'to', nil
         deploy
-      when 'practice'
-        deploy(true)
       when 'info'
         info
       else
@@ -26,7 +24,7 @@ module Ridoku
 
     protected
 
-    def deploy(practice = false)
+    def deploy
       Base.fetch_instances('rails-app')
       Base.fetch_app
 
@@ -40,7 +38,6 @@ module Ridoku
       #   :revision => "opsworks-staging"
       # }
 
-      $stdout.puts $stdout.colorize("**practice**", :red) if practice
       $stdout.puts "Application:"
       $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
       $stdout.puts "Deploying to #{Base.instances.length} instance(s):"
@@ -52,7 +49,6 @@ module Ridoku
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
       deployment = {
-        app_id: Base.app[:app_id],
         instance_ids: instance_ids,
         command: {
           name: 'deploy'
@@ -63,7 +59,7 @@ module Ridoku
         dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
       end
 
-      Base.deploy(deployment) unless practice
+      Base.deploy(deployment)
     end
 
     def info
@@ -82,9 +78,10 @@ module Ridoku
   Command: deploy
 
   Deploy the specified application:
-     deploy         deploy the given application to stack instances
-       --instances: used to specify which instances in the stack to deploy to
-                    if not specified, all active stack instances are used
+    deploy         deploy the given application to stack instances
+      --instances: used to specify which instances in the stack to deploy to
+                   if not specified, all active stack instances are used
+      --practice   print what would be done, but don't actually do it
 
   examples:
     $ deploy

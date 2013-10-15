@@ -29,11 +29,15 @@ module Ridoku
         end
       end
 
+      def configure_opsworks_client
+        opsworks = AWS::OpsWorks.new
+        self.aws_client = opsworks.client
+      end
+
       def fetch_stack(options = {})
         return stack if stack && !options[:force]
 
-        opsworks = AWS::OpsWorks.new
-        Ridoku::Base.aws_client = opsworks.client
+        configure_opsworks_client
 
         stack_name = config[:stack]
 
@@ -168,9 +172,9 @@ module Ridoku
 
         return permissions if permissions && !options[:force]
 
-        self.permissions = Base.aws_client.describe_permissions(
-          iam_user_arn: Base.account[:user][:arn],
-          stack_id: Base.stack[:stack_id]
+        self.permissions = aws_client.describe_permissions(
+          iam_user_arn: account[:user][:arn],
+          stack_id: stack[:stack_id]
         )
       end
 
@@ -196,7 +200,7 @@ module Ridoku
 
       def pretty_instances(io)
         inststr = []
-        Ridoku::Base.instances.each do |inst|
+        instances.each do |inst|
           val = "#{inst[:hostname]} [#{inst[:status]}]"
           inststr << io.colorize(val, [ :bold, inst[:status] == 'online' ? :green : :red ])
         end
@@ -204,7 +208,19 @@ module Ridoku
       end
 
       def deploy(deployment)
-        aws_client.create_deployment(deployment)
+        fetch_stack
+        fetch_app
+
+        deployment[:stack_id] = stack[:stack_id]
+        deployment[:app_id] = app[:app_id]
+
+        if config[:practice]
+          $stdout.puts "Would run command: #{deployment[:command][:name]}"
+        else
+          #aws_client.create_deployment(deployment)
+          $stdout.puts $stdout.colorize('Command Sent', :green) if
+            config[:verbose]
+        end
       end
     end
   end

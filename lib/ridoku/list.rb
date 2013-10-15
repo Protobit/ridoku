@@ -1,3 +1,4 @@
+require 'awesome_print'
 #
 # Command: list
 # Description: Used to list all stacks on an AWS OpsStack account.
@@ -26,6 +27,9 @@ module Ridoku
       when 'layers'
         layers
 
+      when 'instances'
+        instances
+
       when 'config'
         config
 
@@ -41,11 +45,11 @@ module Ridoku
     Command: list
 
     List/Modify the current app's database configuration.
-       list        lists stacks or apps if stack is specified
-       list:config lists current configuration information (app, stack, etc)
-       list:stacks lists stacks by name
-       list:apps   lists apps if stack is specified
-       list:apps   lists layers if stack is specified
+       list         lists stacks or apps if stack is specified
+       list:config  lists current configuration information (app, stack, etc)
+       list:stacks  lists stacks by name
+       list:apps    lists apps if stack is specified
+       list:layers  lists layers if stack is specified
       EOF
     end
 
@@ -59,6 +63,8 @@ module Ridoku
     end
 
     def stacks
+      Base.configure_opsworks_client
+
       stacks = Base.aws_client.describe_stacks
       stack_arr = stacks[:stacks].map do |stack|
         name = stack[:name]
@@ -80,8 +86,8 @@ module Ridoku
       end
 
       list = app_arr.join(', ')
-      $stdout.puts "Application apps on your account for stack: " +
-        "#{$stdout.colorize(Base.stack[:name], :bold)}"
+      $stdout.puts "Application apps on stack " +
+        "#{$stdout.colorize(Base.stack[:name], [:green, :bold])}:"
       $stdout.puts " #{$stdout.colorize(list, :bold)}"
     end
 
@@ -107,8 +113,49 @@ module Ridoku
         end
       end
 
-      $stdout.puts 'Application layers on your account:'
+      $stdout.puts 'Layers on stack ' +
+        "#{$stdout.colorize(Base.stack[:name], [:bold, :green])}:"
       $stdout.puts layer_arr
+    end
+
+    def instances
+      Base.fetch_stack
+
+      $stdout.puts 'Application instances on stack ' +
+        "#{$stdout.colorize(Base.stack[:name], [:bold, :green])}:"
+      layers = Base.aws_client.describe_layers(stack_id: Base.stack[:stack_id])
+      instances = Base.aws_client.describe_instances(stack_id: Base.stack[:stack_id])
+
+
+      layers[:layers].each do |layer|
+        selected = Base.config[:instances]
+
+        linstances = instances[:instances].select do |inst|
+          inst[:layer_ids].index(layer[:layer_id]) != nil
+        end
+
+        instance_arr = linstances.map do |instance|
+          name = "  #{instance[:hostname]}: #{$stdout.colorize(
+            instance[:status], instance[:status] == 'online' ? :green : :red)}"
+          if selected && selected.index(instance[:hostname]) != nil
+            $stdout.colorize(name, :green) 
+          else
+            name
+          end
+        end
+
+        name = "Layer: #{layer[:name]} [#{layer[:shortname]}]"
+
+        $stdout.puts (layer[:shortname] == Base.config[:layer] &&
+          $stdout.colorize(name, :green)) || name
+
+        if instance_arr.length
+          $stdout.puts instance_arr
+        else
+          $stdout.puts '  No instances in this layer.'
+        end
+        $stdout.puts
+      end
     end
   end
 end

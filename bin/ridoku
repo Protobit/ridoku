@@ -112,6 +112,7 @@ opts = GetoptLong.new(
   [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--practice', '-p', GetoptLong::NO_ARGUMENT ],
 )
 
 Ridoku::Base.load_config(RUNCOM)
@@ -120,6 +121,9 @@ opts.each do |opt, arg|
   case opt
   when '--debug'
     Ridoku::Base.config[:debug] = true
+
+  when '--practice'
+    Ridoku::Base.config[:practice] = true
 
   when '--key'
     ENV['AWS_ACCESS_KEY'] = arg
