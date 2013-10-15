@@ -6,29 +6,87 @@ require "#{File.dirname(__FILE__)}/base.rb"
 
 module Ridoku
   class Run < Base
-    def run
-      $stderr.puts '\'run\' method not implemented'
+    def run      
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+
+      case sub_command
+      when 'command', nil
+        run_command
+
+      when 'shell'
+        shell
+
+      else
+        $stderr.puts "Invalid sub-command: #{sub_command}"
+        print_cook_help
+        exit 1
+      end
     end
 
     protected
 
+    def create_ssh_path
+      Base.fetch_instances('rails-app')
+      Base.fetch_account
+
+      instance = Base.instances.each do |inst|
+        break inst if inst[:status] == 'online'
+      end
+
+      unless instance
+        $stderr.puts 'Unable to find a valid instance.'
+        print_run_help
+        exit 1
+      end
+
+      username = Base.account[:user][:user_name].gsub!(/[.]/, '')
+      "#{username}@#{instance[:public_ip]}"
+    end
+
+    def ssh_command(command = nil)
+      Base.fetch_app
+      Base.fetch_permissions
+
+      fail Ridoku::NoSshAccess.new unless
+        Base.permissions[:permissions].first[:allow_ssh]
+      
+      if Base.permissions[:permissions].first[:allow_sudo]
+        chdir = "cd /srv/www/#{Base.app[:shortname]}/current"
+        prefix = "sudo su -c "
+        prompt_cmd = "PROMPT_COMMAND='#{chdir}'"
+      else
+        prompt_cmd = ''
+        prefix = ''
+      end
+
+      network_path = create_ssh_path
+      bash_command = (command && "-c \\\\\\\"#{chdir} && #{command}\\\\\\\"") || ''
+
+      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{prompt_cmd} bash #{bash_command}\\"")
+    end
+
+    def shell
+      exec ssh_command
+    end
+
+    def run_command
+      exec ssh_command(ARGV.join(' '))
+    end
+
     def print_run_help
       $stderr.puts <<-EOF
-    Command: domain
+  Command: run
 
-    List/Modify the current app's associated domains.
-       domain[:list]   lists the key value pairs
-       domain:add      domain, e.g., http://app.example.com
-       domain:delete   domain or index
+  Run the specified command on an instance:
+    run       used to run a specified command
+    run:shell used to ssh to the specified instance
+      --instance Used to specify the instance (max: 1)
 
-    examples:
-      $ domain
-      No domains specified!
-      $ domain:add app.example.com
-      $ domain:list
-      Domains:
-       0: app.example.com
-      EOF
+  examples:
+    $ run:shell
+    mukujara$
+    EOF
     end
   end
 end

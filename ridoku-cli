@@ -206,9 +206,10 @@ end
 AWS.config(config)
 
 opsworks = AWS::OpsWorks.new
-client = opsworks.client
+Ridoku::Base.aws_client = opsworks.client
 
-Ridoku::Base.aws_client = client
+iam = AWS::IAM.new
+Ridoku::Base.iam_client = iam.client
 Ridoku::Base.config[:command] = ARGV.shift.split(':')
 
 if Ridoku::Base.config[:command][0] == 'help'
@@ -232,11 +233,15 @@ end
 begin
   command.run
 rescue Ridoku::NoAppSpecified
-  puts 'No app specified. Use the `list:apps` command to see all apps.'
+  $stderr.puts 'No app specified. Use the `list:apps` command to see all apps.'
   print_help
   exit 1
 rescue Ridoku::NoStackSpecified
-  puts 'No stack specified. Use the `list:stacks` command to see all stacks.'
+  $stderr.puts 'No stack specified. Use the `list:stacks` command to see all stacks.'
+  print_help
+  exit 1
+rescue Ridoku::NoSshAccess
+  $stderr.puts 'Your user does not have access to ssh on the specified stack.'
   print_help
   exit 1
 end

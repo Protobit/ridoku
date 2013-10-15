@@ -4,11 +4,12 @@
 module Ridoku
   class NoAppSpecified < StandardError; end
   class NoStackSpecified < StandardError; end
+  class NoSshAccess < StandardError; end
 
   class Base
     class << self
-      attr_accessor :config, :aws_client, :stack, :custom_json, :app, :layers,
-        :instances, :app_instance_names
+      attr_accessor :config, :aws_client, :iam_client, :stack, :custom_json,
+        :app, :layers, :instances, :account, :permissions
 
       @config = {}
 
@@ -28,7 +29,8 @@ module Ridoku
         end
       end
 
-      def fetch_stack
+      def fetch_stack(options = {})
+        return stack if stack && !options[:force]
         stack_name = config[:stack]
 
         fail NoStackSpecified.new unless stack_name
@@ -54,8 +56,8 @@ module Ridoku
       end
 
       def fetch_app
-        fetch_stack unless stack
-
+        return app if app && !options[:force]
+        fetch_stack
         app_name = config[:app]
 
         fail NoAppSpecified.new unless app_name
@@ -92,16 +94,18 @@ module Ridoku
       end
 
       def fetch_layers
-        fetch_stack unless stack
+        return layers if layers && !options[:force]
+        fetch_stack
         self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])
       end
 
       # 'lb' - load balancing layers
       # 'rails-app'
       # 'custom'
-      def fetch_instances(type = :all)
+      def fetch_instances(type = :all, options = {})
+        return instances if instances && !options[:force]
         if type != :all
-          fetch_layers unless layers
+          fetch_layers
           self.instances = []
 
           layers[:layers].each do |layer|
@@ -116,6 +120,24 @@ module Ridoku
         else
           self.instances = aws_client.describe_instances(stack_id: stack[:stack_id])
         end
+      end
+
+      def fetch_account(options = {})
+        return account if account && !options[:force]
+        self.account = iam_client.get_user
+      end
+
+
+      def fetch_permissions(options = {})
+        fetch_stack
+        fetch_account
+
+        return permissions if permissions && !options[:force]
+
+        self.permissions = Base.aws_client.describe_permissions(
+          iam_user_arn: Base.account[:user][:arn],
+          stack_id: Base.stack[:stack_id]
+        )
       end
 
       def valid_instances?(args)
@@ -136,6 +158,19 @@ module Ridoku
         end
 
         true
+      end
+
+      def pretty_instances(io)
+        inststr = []
+        Ridoku::Base.instances.each do |inst|
+          val = "#{inst[:hostname]} [#{inst[:status]}]"
+          inststr << io.colorize(val, [:bold, inst[:status] == 'online' ? :green : :red])
+        end
+        inststr
+      end
+
+      def deploy(deployment)
+        aws_client.create_deployment(deployment)
       end
     end
   end

@@ -68,12 +68,14 @@ module Ridoku
         exit 1
       end
 
-      fetch_instances('rails-app') unless Base.instances
+      Base.fetch_instances('rails-app') unless Base.instances
 
-      instance_ids = []
+      instances = Base.instances.select do |inst|
+         inst[:status] == 'online'
+      end
 
-      Base.instances.each do |inst|
-        instance_ids << inst[:instance_id] if inst[:status] == 'online'
+      instance_ids = instances.map do |inst|
+        inst[:instance_id]
       end
 
       if instance_ids.length == 0
@@ -88,22 +90,21 @@ module Ridoku
           name: 'execute_recipes',
           args: { 'recipes' => ARGV }
         }
-
       }
 
       deployment.tap do |dep|
-        dep[:comment] = @comment if @comment
+        dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
       end
 
-      Base.aws_client.create_deployment(deployment)
+      Base.deploy(deployment)
     end
 
     def print_cook_help
       $stderr.puts <<-EOF
-    Command: cook
+  Command: cook
 
-    List/Modify the current app's associated domains.
-      cook:run      run a specific or set of 'cookbook::recipe'
+  List/Modify the current app's associated domains.
+    cook:run      run a specific or set of 'cookbook::recipe'
       EOF
     end
   end
