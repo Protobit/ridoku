@@ -46,7 +46,7 @@ module Ridoku
       else
         $stdout.puts 'Environment:'
         environment.each do |key, value|
-          $stdout.puts "  #{key.bold}: '#{value}'"
+          $stdout.puts "  #{$stdout.colorize(key, :bold)}: '#{value}'"
         end
       end
     end

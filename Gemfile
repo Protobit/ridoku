@@ -11,3 +11,6 @@ gem 'json'
 
 # Used for debug messages
 gem 'awesome_print'
+
+# Used for interacting with git
+gem 'rugged'

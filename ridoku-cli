@@ -19,6 +19,22 @@ config = {
   secret_access_key: ENV['AWS_SECRET_KEY']
 }
 
+@validations = []
+
+def validate(opt, arg, &block)
+  @validations << {
+    option: opt,
+    argument: arg,
+    block: block
+  }
+end
+
+def validate_arguments
+  @validations.each do |val|
+    val[:block].call(val[:option], val[:arguments])
+  end
+end
+
 def print_help
   $stderr.puts <<-EOF
   usage: ridoku [OPTIONS] command [command options]
@@ -34,49 +50,61 @@ def print_help
       db
       run
       cook
+
+  Apps and Stacks:
+
+  Amazon OpsWorks similarly to Heroku, but, because you own all the resources,
+  you'll have to provide a bit more information than you do to Heroku in order
+  for this commandline utility to assist.
+
+    Stacks:  The technology stack to use for a particular type of application.
+
+      Heroku probably has a similar structure internally, because they allow
+      you to use any number of program Stacks (Rails, PHP, Python, Go, etc). 
+      The difference is that now in OpsWorks you control the stack environment,
+      where on Heroku you did not.
+
+      If you have a stack configured, you can view pertinent information using
+      
+      $ ridoku-cli list:stacks
+
+      This will display the stacks that are currently associated with your AWS
+      account.  To 
+
+      To set the specific stack to use:
+
+      $ ridoku-cli --set-stack <stackname>
+
+      To set a single run stack or override the default:
+
+      $ ridoku-cli --stack <stackname> --app <appname> command...
+
+    Apps:  The actual application which runs on the technology stack.
+
+      This is what you have control over on Heroku.  You can customize the app
+      domains, database information, environment, etc, on a per-application
+      basis.  The same goes for OpsWorks.
+
+      To set the default app to use:
+
+      $ ridoku-cli --set-app <stackname>
+
+      To set a specific run app or override the default:
+
+      $ ridoku-cli --stack <stackname> --app <appname> command...
   EOF
-end
-
-class IO
-  def colorize(input, args)
-    arr = Array[args]
-    colors = {
-      black: ["\033[30m", "\033[0m"],
-      red: ["\033[31m", "\033[0m"],
-      green: ["\033[32m", "\033[0m"],
-      brown: ["\033[33m", "\033[0m"],
-      blue: ["\033[34m", "\033[0m"],
-      magenta: ["\033[35m", "\033[0m"],
-      cyan: ["\033[36m", "\033[0m"],
-      gray: ["\033[37m", "\033[0m"],
-      bg_black: ["\033[40m", "\0330m"],
-      bg_red: ["\033[41m", "\033[0m"],
-      bg_green: ["\033[42m", "\033[0m"],
-      bg_brown: ["\033[43m", "\033[0m"],
-      bg_blue: ["\033[44m", "\033[0m"],
-      bg_magenta: ["\033[45m", "\033[0m"],
-      bg_cyan: ["\033[46m", "\033[0m"],
-      bg_gray: ["\033[47m", "\033[0m"],
-      bold: ["\033[1m", "\033[22m"],
-      reverse_color: ["\033[7m", "\033[27m"]
-    }
-    return input unless self.isatty
-
-    arr.each do |ar|
-      next unless colors.key?(ar)
-      input = "#{colors[ar].first}#{input}#{colors[ar].last}"
-    end
-
-    input
-  end
 end
 
 opts = GetoptLong.new(
   [ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
   [ '--key', '-k', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--secret', '-s', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--set-default-app', '-D', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT]
+  [ '--set-app', '-D', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--set-stack', '-S', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT],
+  [ '--stack', '-t', GetoptLong::REQUIRED_ARGUMENT],
+  [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
 )
 
 Ridoku::Base.load_config(RUNCOM)
@@ -92,16 +120,59 @@ opts.each do |opt, arg|
   when '--secret'
     ENV['AWS_SECRET_KEY'] = arg
 
-  when '--set-default-app'
-    Ridoku::Base.config['app'] = arg
+  when '--set-app'
+    Ridoku::Base.config[:app] = arg
     Ridoku::Base.save_config(RUNCOM)
 
-    puts "Default app name set to: #{Ridoku::Base.config['app']}"
+    puts "Default app name set to: #{Ridoku::Base.config[:app]}"
     exit 0
+
+  when '--set-stack'
+    Ridoku::Base.config[:stack] = arg
+    Ridoku::Base.save_config(RUNCOM)
+
+    puts "Default app name set to: #{Ridoku::Base.config[:stack]}"
+    exit 0
+
+  when '--stack'
+    Ridoku::Base.config[:stack] = arg
 
   when '--app'
     Ridoku::Base.config[:app] = arg
 
+  when '--comment'
+    Ridoku::Base.config[:comment] = arg
+
+  when '--instance'
+    Ridoku::Base.config[:instances] = arg.split(%r(,|\||;))
+
+    validate(opt,arg) do |option, argument|
+      unless Ridoku::Base.valid_instances?(Ridoku::Base.config[:instances])
+        $stderr.puts 'Invalid instances provided.'
+
+        validinst = []
+        Ridoku::Base.instances.each do |inst|
+          next unless inst[:status] == 'online'
+          val = "#{inst[:hostname]} [#{inst[:status]}]"
+          validinst << $stderr.colorize(val, [:bold, :green])
+        end
+
+        invalidinst = []
+        Ridoku::Base.instances.each do |inst|
+          next unless inst[:status] != 'online'
+          val = "#{inst[:hostname]} [#{inst[:status]}]"
+          invalidinst << $stderr.colorize(val, [:bold, :red])
+        end
+
+        $stderr.puts 'Valid Instances:'
+        $stderr.puts validinst
+        $stderr.puts 'Invalid Instances:'
+        $stderr.puts invalidinst
+
+        puts 'Run the help command to see more.'
+        exit 1
+      end
+    end
   else
     print_help
     exit 1
@@ -110,12 +181,6 @@ end
 
 unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
   puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
-  print_help
-  exit 1
-end
-
-unless Ridoku::Base.config[:app]
-  puts 'No app specified. Use the `list` command to see all apps.'
   print_help
   exit 1
 end
@@ -151,6 +216,8 @@ if Ridoku::Base.config[:command][0] == 'help'
   exit 0
 end
 
+validate_arguments
+
 begin
   command = Ridoku.const_get(
     Ridoku::Base.config[:command].first.capitalize
@@ -162,4 +229,14 @@ rescue => e
   exit 1
 end
 
-command.run
+begin
+  command.run
+rescue Ridoku::NoAppSpecified
+  puts 'No app specified. Use the `list:apps` command to see all apps.'
+  print_help
+  exit 1
+rescue Ridoku::NoStackSpecified
+  puts 'No stack specified. Use the `list:stacks` command to see all stacks.'
+  print_help
+  exit 1
+end

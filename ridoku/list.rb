@@ -7,16 +7,77 @@
 require "#{File.dirname(__FILE__)}/base.rb"
 
 module Ridoku
-  class List < Base
+  class List < Base    
     def run
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+    
+      case sub_command
+      when nil
+        return apps if Base.config[:stack]
+        stacks
+
+      when 'stacks'
+        stacks
+
+      when 'apps'
+        apps
+
+      when 'config'
+        config
+
+      else
+        print_list_help
+      end
+    end
+
+    protected
+
+    def print_list_help
+      $stderr.puts <<-EOF
+    Command: list
+
+    List/Modify the current app's database configuration.
+       list        lists stacks or apps if stack is specified
+       list:config lists current configuration information (app, stack, etc)
+       list:stacks lists stacks by name
+       list:apps   lists apps if stack is specified
+      EOF
+    end
+
+    def config
+      config = [
+        'Current:',
+        "  #{$stdout.colorize('Stack', :bold)}: #{Base.config[:stack]}",
+        "  #{$stdout.colorize('App', :bold)}: #{Base.config[:app]}"
+      ]
+      $stdout.puts config
+    end
+
+    def stacks
       stacks = Base.aws_client.describe_stacks
       stack_arr = stacks[:stacks].map do |stack|
         name = stack[:name]
-        (name == Base.config[:app] && $stdio.colorize(name, :green)) || name
+        (name == Base.config[:stack] && $stdout.colorize(name, :green)) || name
       end
 
       list = stack_arr.join(', ')
       $stdout.puts 'Application stacks on your account:'
+      $stdout.puts " #{$stdout.colorize(list, :bold)}"
+    end
+
+    def apps
+      Base.fetch_stack
+
+      apps = Base.aws_client.describe_apps(stack_id: Base.stack[:stack_id])
+      app_arr = apps[:apps].map do |app|
+        name = app[:name]
+        (name == Base.config[:app] && $stdout.colorize(name, :green)) || name
+      end
+
+      list = app_arr.join(', ')
+      $stdout.puts "Application apps on your account for stack: " +
+        "#{$stdout.colorize(Base.stack[:name], :bold)}"
       $stdout.puts " #{$stdout.colorize(list, :bold)}"
     end
   end

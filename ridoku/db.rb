@@ -12,6 +12,41 @@ module Ridoku
   class Db < Base
     attr_accessor :dbase
 
+    def run
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+      sub_sub_command = (command.length > 1 && command[2]) || nil
+
+      load_database
+
+      case sub_command
+      when 'list', nil, 'info'
+        list(false)
+
+      when 'credentials'
+        list(true)
+
+      when 'set', 'add'
+        set
+
+      when 'delete', 'remove', 'rm'
+        delete
+
+      when 'url', 'path'
+        url(sub_sub_command)
+
+      when 'help', '?'
+        print_config_help
+
+      else
+        $stderr.puts "Invalid sub-command: #{sub_command}"
+        print_db_help
+        exit 1
+      end
+    end
+
+    protected
+
     def load_database
       Base.fetch_stack
       self.dbase =
@@ -146,39 +181,6 @@ module Ridoku
         Base.save_stack
       else
         get_url_database
-      end
-    end
-
-    def run
-      command = Base.config[:command]
-      sub_command = (command.length > 0 && command[1]) || nil
-      sub_sub_command = (command.length > 1 && command[2]) || nil
-
-      load_database
-
-      case sub_command
-      when 'list', nil, 'info'
-        list(false)
-
-      when 'credentials'
-        list(true)
-
-      when 'set', 'add'
-        set
-
-      when 'delete', 'remove', 'rm'
-        delete
-
-      when 'url', 'path'
-        url(sub_sub_command)
-
-      when 'help', '?'
-        print_config_help
-
-      else
-        $stderr.puts "Invalid sub-command: #{sub_command}"
-        print_db_help
-        exit 1
       end
     end
   end

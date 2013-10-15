@@ -2,12 +2,109 @@
 # Command: cook
 #
 
+require 'rugged'
 require "#{File.dirname(__FILE__)}/base.rb"
 
 module Ridoku
   class Cook < Base
+
+    def run      
+      command = Base.config[:command]
+      sub_command = (command.length > 0 && command[1]) || nil
+
+      Base.fetch_stack
+
+      case sub_command
+      # when 'list', nil
+      #   list
+
+      # when 'update'
+      #   update
+
+      when 'run'
+        cook
+
+      else
+        $stderr.puts "Invalid sub-command: #{sub_command}"
+        print_cook_help
+        exit 1
+      end
+    end
+
+    protected
+
+    def list
+      update unless File.exists?(cookbook_path)
+    end
+
+    def cookbook_path
+      fail NoStackSpecified.new unless Base.stack
+
+      @path ||= "#{File.dirname(__FILE__)}/.cookbook-#{Base.stack[:name]}/"
+      @path
+    end
+
+    def update
+      # cookbook = cookbook_path
+      # gitrepo = Base.stack[:custom_cookbooks_source][:url]
+      # gitrevision = Base.stack[:custom_cookbooks_source][:revision]
+    end
+
+    def valid_recipe_format?
+      return false if ARGV.length == 0
+
+      recipe = %r(^[a-zA-Z0-9_\-]+(::[a-zA-Z0-9_\-]+){0,1}$)
+      ARGV.each do |cr|
+        return false unless cr.match(recipe)
+      end
+
+      true
+    end
+
     def cook
-      $stderr.puts '\'cook\' method not implemented'
+      unless valid_recipe_format?
+        $stderr.puts 'Invalid recipes provided.'
+        print_cook_help
+        exit 1
+      end
+
+      fetch_instances('rails-app') unless Base.instances
+
+      instance_ids = []
+
+      Base.instances.each do |inst|
+        instance_ids << inst[:instance_id] if inst[:status] == 'online'
+      end
+
+      if instance_ids.length == 0
+        $stderr.puts 'No valid instances available.'
+        exit 1
+      end
+
+      deployment = {
+        stack_id: Base.stack[:stack_id],
+        instance_ids: instance_ids,
+        command: {
+          name: 'execute_recipes',
+          args: { 'recipes' => ARGV }
+        }
+
+      }
+
+      deployment.tap do |dep|
+        dep[:comment] = @comment if @comment
+      end
+
+      Base.aws_client.create_deployment(deployment)
+    end
+
+    def print_cook_help
+      $stderr.puts <<-EOF
+    Command: cook
+
+    List/Modify the current app's associated domains.
+      cook:run      run a specific or set of 'cookbook::recipe'
+      EOF
     end
   end
 end
