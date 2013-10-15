@@ -101,8 +101,13 @@ module Ridoku
       def fetch_layers(shortname = :all, options = {})
         return layers if layers && !options[:force]
         fetch_stack
-        self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])[:layers]
-        self.layers.select! { |layer| layer[:shortname] == shortname } if shortname != :all
+
+        self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])
+        if shortname != :all
+          self.layers = self.layers[:layers].select do |layer|
+            layer[:shortname] == shortname
+          end
+        end
       end
 
       def save_layer(layer, values)

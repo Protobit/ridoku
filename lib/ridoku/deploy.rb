@@ -2,21 +2,21 @@
 # Command: deploy
 #
 
-require "#{File.dirname(__FILE__)}/base.rb"
+require 'ridoku/base'
 
 module Ridoku
   class Deploy < Base
     attr_accessor :app
 
     def run
-      Base.fetch_stack
-
       command = Base.config[:command]
       sub_command = (command.length > 0 && command[1]) || nil
 
       case sub_command
       when 'to', nil
         deploy
+      when 'practice'
+        deploy(true)
       when 'info'
         info
       else
@@ -26,7 +26,7 @@ module Ridoku
 
     protected
 
-    def deploy
+    def deploy(practice = false)
       Base.fetch_instances('rails-app')
       Base.fetch_app
 
@@ -40,12 +40,15 @@ module Ridoku
       #   :revision => "opsworks-staging"
       # }
 
+      $stdout.puts $stdout.colorize("**practice**", :red) if practice
       $stdout.puts "Application:"
       $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
       $stdout.puts "Deploying to #{Base.instances.length} instance(s):"
-      $stdout.puts Base.pretty_instances($stdout)
+      Base.pretty_instances($stdout).each do |inst|
+        $stdout.puts "  #{inst}"
+      end
       $stdout.puts "Repository:"
-      $stdout.puts "#{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
+      $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
       deployment = {
@@ -60,7 +63,7 @@ module Ridoku
         dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
       end
 
-      Base.deploy(deployment)
+      Base.deploy(deployment) unless practice
     end
 
     def info
@@ -91,8 +94,6 @@ module Ridoku
       mukujara, hinoenma
     Using git repository:
       git@github.com:ridoku/example-app.git @ master
-    This may take a while...
-    Successfully Deployed
     EOF
     end
   end

@@ -6,13 +6,13 @@ require 'json'
 require 'awesome_print'
 require 'getoptlong'
 
-require "#{File.dirname(__FILE__)}/ridoku/base.rb"
+require "ridoku/base.rb"
 
-Dir.glob("#{File.dirname(__FILE__)}/ridoku/*.rb") do |class_file|
+Dir.glob("ridoku/*.rb") do |class_file|
   require class_file
 end
 
-RUNCOM = "#{File.dirname(__FILE__)}/.ridokurc"
+RUNCOM = "#{ENV['HOME']}/.ridokurc"
 
 config = {
   access_key_id: ENV['AWS_ACCESS_KEY'],

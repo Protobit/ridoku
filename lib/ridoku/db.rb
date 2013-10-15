@@ -6,7 +6,7 @@
 #  config:delete KEY
 #
 
-require "#{File.dirname(__FILE__)}/base.rb"
+require 'ridoku/base'
 
 module Ridoku
   class Db < Base

@@ -3,7 +3,7 @@
 #
 
 require 'rugged'
-require "#{File.dirname(__FILE__)}/base.rb"
+require 'ridoku/base'
 
 module Ridoku
   class Cook < Base

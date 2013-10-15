@@ -4,7 +4,7 @@
 #   The current selection is colorized green.
 #
 
-require "#{File.dirname(__FILE__)}/base.rb"
+require 'ridoku/base'
 
 module Ridoku
   class List < Base    
