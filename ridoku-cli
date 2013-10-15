@@ -105,6 +105,7 @@ opts = GetoptLong.new(
   [ '--stack', '-t', GetoptLong::REQUIRED_ARGUMENT],
   [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
 )
 
 Ridoku::Base.load_config(RUNCOM)
@@ -136,6 +137,9 @@ opts.each do |opt, arg|
 
   when '--stack'
     Ridoku::Base.config[:stack] = arg
+
+  when '--user'
+    Ridoku::Base.config[:shell_user] = arg
 
   when '--app'
     Ridoku::Base.config[:app] = arg

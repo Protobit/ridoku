@@ -55,8 +55,9 @@ module Ridoku
         ) if stack
       end
 
-      def fetch_app
+      def fetch_app(options = {})
         return app if app && !options[:force]
+
         fetch_stack
         app_name = config[:app]
 

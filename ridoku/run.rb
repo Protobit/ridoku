@@ -6,6 +6,8 @@ require "#{File.dirname(__FILE__)}/base.rb"
 
 module Ridoku
   class Run < Base
+    attr_accessor :environment
+    
     def run      
       command = Base.config[:command]
       sub_command = (command.length > 0 && command[1]) || nil
@@ -25,6 +27,14 @@ module Ridoku
     end
 
     protected
+
+    def load_environment
+      Base.fetch_stack
+      Base.fetch_app
+
+      self.environment =
+        Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
+    end
 
     def create_ssh_path
       Base.fetch_instances('rails-app')
@@ -47,23 +57,29 @@ module Ridoku
     def ssh_command(command = nil)
       Base.fetch_app
       Base.fetch_permissions
+      
+      load_environment
 
       fail Ridoku::NoSshAccess.new unless
         Base.permissions[:permissions].first[:allow_ssh]
       
       if Base.permissions[:permissions].first[:allow_sudo]
         chdir = "cd /srv/www/#{Base.app[:shortname]}/current"
-        prefix = "sudo su deploy -c "
+        prefix = "sudo su #{Base.config[:shell_user] || 'deploy'} -c "
         prompt_cmd = "PROMPT_COMMAND='#{chdir}'"
       else
         prompt_cmd = ''
         prefix = ''
       end
 
+      environ = environment.map do |key, val|
+        "#{key}='#{val}'"
+      end.join(' ')
+
       network_path = create_ssh_path
       bash_command = (command && "-c \\\\\\\"#{chdir} && #{command}\\\\\\\"") || ''
 
-      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{prompt_cmd} bash #{bash_command}\\"")
+      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{prompt_cmd} #{environ} bash #{bash_command}\\"")
     end
 
     def shell

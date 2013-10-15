@@ -16,7 +16,7 @@ module Ridoku
       Base.fetch_stack
 
       self.environment =
-        Base.custom_json[:deploy][Base.config[:app].downcase][:app_env]
+        Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
     end
 
     def print_env_help
@@ -57,8 +57,8 @@ module Ridoku
           key = m[1]
           value = m[2]
 
-          update = environment.key?(key.to_sym)
-          environment[key.to_sym] = value
+          update = environment.key?(key)
+          environment[key] = value
           $stdout.puts "#{update && 'Updating' || 'Adding'}: #{key} as '#{value}'"
         end
       end
