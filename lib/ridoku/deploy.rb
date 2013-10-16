@@ -49,6 +49,7 @@ module Ridoku
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
       deployment = {
+        app_id: Base.app[:app_id],
         instance_ids: instance_ids,
         command: {
           name: 'deploy'

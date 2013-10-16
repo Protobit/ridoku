@@ -244,12 +244,9 @@ end
 
 begin
   command.run
-rescue Ridoku::NoAppSpecified
-  $stderr.puts 'No app specified. Use the `list:apps` command to see all apps.'
-  print_help
-  exit 1
-rescue Ridoku::NoStackSpecified
-  $stderr.puts 'No stack specified. Use the `list:stacks` command to see all stacks.'
+rescue Ridoku::InvalidConfig => e
+  $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
+  $stderr.puts 'Use the `list` command to see relavent info.'
   print_help
   exit 1
 rescue Ridoku::NoSshAccess

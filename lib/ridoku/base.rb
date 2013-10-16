@@ -2,8 +2,15 @@
 # Base Ridoku class for running commands
 
 module Ridoku
-  class NoAppSpecified < StandardError; end
-  class NoStackSpecified < StandardError; end
+  class InvalidConfig < StandardError
+    attr_accessor :type, :error
+
+    def initialize(type, error)
+      self.type = type
+      self.error = error
+    end
+  end
+
   class NoSshAccess < StandardError; end
 
   class Base
@@ -41,14 +48,16 @@ module Ridoku
 
         stack_name = config[:stack]
 
-        fail NoStackSpecified.new unless stack_name
+        fail InvalidConfig.new(:stack, :none) unless stack_name
 
         stacks = aws_client.describe_stacks
         self.stack = nil
-
+        
         stacks[:stacks].each do |stck|
           self.stack = stck if stack_name == stck[:name]
         end
+
+        fail InvalidConfig.new(:stack, :invalid) unless stack
 
         self.custom_json = JSON.parse(stack[:custom_json]) if stack
 
@@ -69,7 +78,7 @@ module Ridoku
         fetch_stack
         app_name = config[:app]
 
-        fail NoAppSpecified.new unless app_name
+        fail InvalidConfig.new(:app, :none) unless app_name
 
         apps = aws_client.describe_apps(stack_id: stack[:stack_id])
         self.app = nil
@@ -77,6 +86,8 @@ module Ridoku
         apps[:apps].each do |ap|
           self.app = ap if app_name == ap[:name]
         end
+
+        fail InvalidConfig.new(:app, :invalid) unless stack
 
         return app
       end
@@ -212,12 +223,18 @@ module Ridoku
         fetch_app
 
         deployment[:stack_id] = stack[:stack_id]
-        deployment[:app_id] = app[:app_id]
 
         if config[:practice]
           $stdout.puts "Would run command: #{deployment[:command][:name]}"
+          $stdout.puts 'On instances:'
+          instances.each do |inst|
+            next unless deployment[:instance_ids].index(inst[:instance_id]) != nil
+
+            $stdout.puts "  #{inst[:hostname]}: #{$stdout.colorize(
+              inst[:status], inst[:status] == 'online' ? :green : :red)}"
+          end
         else
-          #aws_client.create_deployment(deployment)
+          aws_client.create_deployment(deployment)
           $stdout.puts $stdout.colorize('Command Sent', :green) if
             config[:verbose]
         end
