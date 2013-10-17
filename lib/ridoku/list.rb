@@ -63,10 +63,9 @@ module Ridoku
     end
 
     def stacks
-      Base.configure_opsworks_client
+      Base.fetch_stack
 
-      stacks = Base.aws_client.describe_stacks
-      stack_arr = stacks[:stacks].map do |stack|
+      stack_arr = Base.stack_list.map do |stack|
         name = stack[:name]
         (name == Base.config[:stack] && $stdout.colorize(name, :green)) || name
       end
@@ -77,10 +76,9 @@ module Ridoku
     end
 
     def apps
-      Base.fetch_stack
+      Base.fetch_app
 
-      apps = Base.aws_client.describe_apps(stack_id: Base.stack[:stack_id])
-      app_arr = apps[:apps].map do |app|
+      app_arr = Base.app_list.map do |app|
         name = app[:name]
         (name == Base.config[:app] && $stdout.colorize(name, :green)) || name
       end
@@ -92,17 +90,15 @@ module Ridoku
     end
 
     def layers
-      Base.fetch_stack
-
-      layers = Base.aws_client.describe_layers(stack_id: Base.stack[:stack_id])
+      Base.fetch_layer
 
       max = 0
-      layers[:layers].each do |layer|
+      Base.layer_list.each do |layer|
         shortname = $stdout.colorize(layer[:shortname], :bold)
         max = shortname.length if max < shortname.length
       end
 
-      layer_arr = layers[:layers].map do |layer|
+      layer_arr = Base.layer_list.map do |layer|
         fmt = "%#{max}s"
         shortname = sprintf(fmt, $stdout.colorize(layer[:shortname], :bold))
         name = "[#{shortname}] #{layer[:name]}"
@@ -119,18 +115,17 @@ module Ridoku
     end
 
     def instances
-      Base.fetch_stack
+      Base.fetch_layer
+      Base.fetch_instance
 
       $stdout.puts 'Application instances on stack ' +
         "#{$stdout.colorize(Base.stack[:name], [:bold, :green])}:"
-      layers = Base.aws_client.describe_layers(stack_id: Base.stack[:stack_id])
-      instances = Base.aws_client.describe_instances(stack_id: Base.stack[:stack_id])
 
 
-      layers[:layers].each do |layer|
+      Base.layer_list.each do |layer|
         selected = Base.config[:instances]
 
-        linstances = instances[:instances].select do |inst|
+        linstances = Base.instances.select do |inst|
           inst[:layer_ids].index(layer[:layer_id]) != nil
         end
 

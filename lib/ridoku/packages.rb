@@ -41,7 +41,7 @@ module Ridoku
     end
 
     def list
-      Base.fetch_layers(Base.config[:layer] || 'rails-app')
+      Base.fetch_layer(Base.config[:layer] || 'rails-app')
 
       if Base.layers.length == 0
         $stdout.puts 'No Layers Selected!'
@@ -67,7 +67,7 @@ module Ridoku
     end
 
     def set
-      Base.fetch_layers(Base.config[:layer] || 'rails-app')
+      Base.fetch_layer(Base.config[:layer] || 'rails-app')
 
       ARGV.each do |package|
         # $stdout.puts "#{update && 'Updating' || 'Adding'}: #{key} as '#{value}'"
@@ -77,7 +77,7 @@ module Ridoku
     end
 
     def delete
-      Base.fetch_layers(Base.config[:layer] || 'rails-app')
+      Base.fetch_layer(Base.config[:layer] || 'rails-app')
 
       ARGV.each do |package|
         # $stdout.puts "Deleting key: #{key}, '#{value}'"

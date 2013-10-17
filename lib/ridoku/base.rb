@@ -16,7 +16,8 @@ module Ridoku
   class Base
     class << self
       attr_accessor :config, :aws_client, :iam_client, :stack, :custom_json,
-        :app, :layers, :instances, :account, :permissions
+        :app, :layers, :instances, :account, :permissions, :stack_list,
+        :app_list, :layer_list, :instance_list
 
       @config = {}
 
@@ -50,10 +51,10 @@ module Ridoku
 
         fail InvalidConfig.new(:stack, :none) unless stack_name
 
-        stacks = aws_client.describe_stacks
+        self.stack_list = aws_client.describe_stacks[:stacks]
         self.stack = nil
         
-        stacks[:stacks].each do |stck|
+        stack_list.each do |stck|
           self.stack = stck if stack_name == stck[:name]
         end
 
@@ -80,14 +81,14 @@ module Ridoku
 
         fail InvalidConfig.new(:app, :none) unless app_name
 
-        apps = aws_client.describe_apps(stack_id: stack[:stack_id])
+        self.app_list = aws_client.describe_apps(stack_id: stack[:stack_id])[:apps]
         self.app = nil
 
-        apps[:apps].each do |ap|
+        app_list.each do |ap|
           self.app = ap if app_name == ap[:name]
         end
 
-        fail InvalidConfig.new(:app, :invalid) unless stack
+        fail InvalidConfig.new(:app, :invalid) unless app
 
         return app
       end
@@ -113,13 +114,14 @@ module Ridoku
         aws_client.update_app(save_info)
       end
 
-      def fetch_layers(shortname = :all, options = {})
+      def fetch_layer(shortname = :all, options = {})
         return layers if layers && !options[:force]
         fetch_stack
 
-        self.layers = aws_client.describe_layers(stack_id: stack[:stack_id])
+        self.layers = self.layer_list = aws_client.describe_layers(
+          stack_id: stack[:stack_id])[:layers]
         if shortname != :all
-          self.layers = self.layers[:layers].select do |layer|
+          self.layers = self.layers.select do |layer|
             layer[:shortname] == shortname
           end
         end
@@ -147,13 +149,19 @@ module Ridoku
       # 'lb' - load balancing layers
       # 'rails-app'
       # 'custom'
-      def fetch_instances(shortname = :all, options = {})
+      def fetch_instance(shortname = :all, options = {})
         return instances if instances && !options[:force]
+
+        fetch_stack
+
+        self.instances = self.instance_list =
+          aws_client.describe_instances(stack_id: stack[:stack_id])[:instances]
+
         if shortname != :all
-          fetch_layers
+          fetch_layer
           self.instances = []
 
-          layers[:layers].each do |layer|
+          layer_list.each do |layer|
             if layer[:shortname] == shortname
               instance = aws_client.describe_instances(
                 layer_id: layer[:layer_id])
@@ -162,8 +170,6 @@ module Ridoku
           end
 
           self.instances.flatten!
-        else
-          self.instances = aws_client.describe_instances(stack_id: stack[:stack_id])
         end
       end
 
@@ -193,7 +199,7 @@ module Ridoku
         args = [args] unless args.is_a?(Array)
         return false if args.length == 0
 
-        fetch_instances('rails-app')
+        fetch_instance('rails-app')
 
         inst_names = instances.map do |inst|
           return false if args.index(inst[:hostname]) != nil &&

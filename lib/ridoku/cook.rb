@@ -29,7 +29,7 @@ module Ridoku
     protected
 
     def extract_instance_ids
-      Base.fetch_instances(Base.config[:layers] || 'rails-app') unless
+      Base.fetch_instance(Base.config[:layers] || 'rails-app') unless
         Base.instances
 
       instances = Base.instances.select do |inst|

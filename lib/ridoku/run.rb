@@ -33,7 +33,7 @@ module Ridoku
     end
 
     def create_ssh_path
-      Base.fetch_instances('rails-app')
+      Base.fetch_instance('rails-app')
       Base.fetch_account
 
       instance = Base.instances.each do |inst|

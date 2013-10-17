@@ -25,7 +25,7 @@ module Ridoku
     protected
 
     def deploy
-      Base.fetch_instances('rails-app')
+      Base.fetch_instance('rails-app')
       Base.fetch_app
 
       Base.instances.select! { |inst| inst[:status] == 'online' }
@@ -64,7 +64,7 @@ module Ridoku
     end
 
     def info
-      Base.fetch_instances('rails-app') unless Base.instances
+      Base.fetch_instance('rails-app') unless Base.instances
 
       Base.instances = Base.instances.select do |inst|
          inst[:status] == 'online'

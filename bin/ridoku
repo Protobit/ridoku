@@ -4,10 +4,10 @@ require 'aws'
 require 'logger'
 require 'json'
 require 'getoptlong'
+require 'awesome_print'
 
 require 'io-colorize'
 
-require 'ridoku/base'
 require 'ridoku/cook'
 require 'ridoku/db'
 require 'ridoku/deploy'
@@ -16,6 +16,11 @@ require 'ridoku/env'
 require 'ridoku/list'
 require 'ridoku/packages'
 require 'ridoku/run'
+require 'ridoku/dump'
+require 'ridoku/version'
+
+require 'ridoku/rails_defaults'
+
 
 RUNCOM = "#{ENV['HOME']}/.ridokurc"
 
@@ -40,8 +45,9 @@ def validate_arguments
   end
 end
 
-def print_help
+def print_help(full = false)
   $stderr.puts <<-EOF
+  Ridoku, #{Ridoku::VERSION}
   usage: ridoku [OPTIONS] command [command options]
     [--] is used to separate arguments from ridoku for each command
       e.g.,  'ridoku list-apps --help' display this help.
@@ -55,6 +61,10 @@ def print_help
       db
       run
       cook
+  EOF
+
+  if full
+    $stderr.puts <<-EOF
 
   Apps and Stacks:
 
@@ -98,6 +108,7 @@ def print_help
 
       $ ridoku-cli --stack <stackname> --app <appname> command...
   EOF
+  end
 end
 
 opts = GetoptLong.new(
@@ -225,9 +236,11 @@ AWS.config(config)
 Ridoku::Base.config[:command] = ARGV.shift.split(':')
 
 if Ridoku::Base.config[:command][0] == 'help'
-  print_help
+  print_help(true)
   exit 0
 end
+
+ap RailsDefaults.new.defaults(:stack)
 
 validate_arguments
 
