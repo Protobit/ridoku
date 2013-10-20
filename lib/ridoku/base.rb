@@ -1,6 +1,9 @@
 #
 # Base Ridoku class for running commands
 
+require 'aws'
+require 'awesome_print'
+
 module Ridoku
   class InvalidConfig < StandardError
     attr_accessor :type, :error
@@ -17,7 +20,7 @@ module Ridoku
     class << self
       attr_accessor :config, :aws_client, :iam_client, :stack, :custom_json,
         :app, :layers, :instances, :account, :permissions, :stack_list,
-        :app_list, :layer_list, :instance_list
+        :app_list, :layer_list, :instance_list, :account_id
 
       @config = {}
 
@@ -31,9 +34,18 @@ module Ridoku
         self.config ||= {}
       end
 
-      def save_config(path)
+      def save_config(path, limit = [:app, :stack, :ssh_key, :local_init,
+        :shell_user, :service_arn, :instance_arn])
+        save = {}
+        if limit.length
+          limit.each do |lc|
+            save[lc] = config[lc]
+          end
+        else
+          save = config
+        end
         File.open(path, 'w') do |file|
-          file.write(@config.to_json)
+          file.write(save.to_json)
         end
       end
 
@@ -173,13 +185,30 @@ module Ridoku
         end
       end
 
-      def fetch_account(options = {})
-        return account if account && !options[:force]
+      def configure_iam_client
+        return if self.iam_client
 
         iam = AWS::IAM.new
         self.iam_client = iam.client
+      end
+
+      def fetch_account(options = {})
+        return account if account && !options[:force]
+
+        configure_iam_client
 
         self.account = iam_client.get_user
+
+        self.account_id = nil
+
+        account[:user][:arn].match(/.*:.*:.*:.*:([0-9]+)/) do |m|
+          self.account_id = m[1]
+        end
+
+        fail StandardError.new('Failed to determine account ID from user info (it was me not you!)!') unless
+          account_id
+
+        account
       end
 
 
@@ -193,6 +222,60 @@ module Ridoku
           iam_user_arn: account[:user][:arn],
           stack_id: stack[:stack_id]
         )
+      end
+
+      def fetch_roles
+        configure_iam_client
+
+        service = 'aws-opsworks-service-role'
+        instance = 'aws-opsworks-ec2-role'
+
+        iam_client.list_roles[:roles].each do |role|
+          config[:instance_arn] = role[:arn] if role[:role_name] == instance && !config.key?(:instance_arn)
+          config[:service_arn] = role[:arn] if role[:role_name] == service && !config.key?(:service_arn)
+        end
+      end
+
+      def roles_configured?
+        fetch_roles
+        service_role_confifured? && instance_role_configured?
+      end
+
+      def service_role_configured?
+        fetch_roles
+        config.key?(:service_arn) && config[:service_arn] != nil
+      end
+
+      def instance_role_configured?
+        fetch_roles
+        config.key?(:instance_arn) && config[:instance_arn] != nil
+      end
+
+      def configure_roles
+         configure_service_roles
+         configure_instance_roles
+      end
+
+      def configure_instance_roles
+        return true if instance_role_configured?
+        fetch_account
+
+        instance_role = "%7B%22Version%22%3A%222008-10-17%22%2C%22Statement%22%3A%5B%7B%22Sid%22%3A%22%22%2C%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Service%22%3A%22ec2.amazonaws.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRole%22%7D%5D%7D"
+        instance_resource = 'role/aws-opsworks-ec2-role'
+        instance_role_arn = "arn:aws:iam::#{account_id}:#{instance_resource}"
+      end
+
+      def configure_service_roles
+        return true if service_role_configured?
+        fetch_account
+
+        opsworks_role =  "%7B%22Version%22%3A%222008-10-17%22%2C%22Statement%22%3A%5B%7B%22Sid%22%3A%22%22%2C%22Effect%22%3A%22Allow%22%2C%22Principal%22%3A%7B%22Service%22%3A%22opsworks.amazonaws.com%22%7D%2C%22Action%22%3A%22sts%3AAssumeRole%22%7D%5D%7D"
+        opsworks_resource = 'role/aws-opsworks-service-role'
+        opsworks_role_arn = "arn:aws:iam::#{account_id}:#{opsworks_resource}"
+      end
+
+      def create_role(config)
+        $stderr.puts config.to_json
       end
 
       def valid_instances?(args)

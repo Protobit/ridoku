@@ -12,7 +12,12 @@ module Ridoku
   end
 
   class ClassProperties
-    attr_accessor :default, :required, :input
+    attr_accessor :default, :required, :input, :warnings
+
+    def initialize
+      fail StandardError.new('IAM/OpsWorks permission are not yet configured.') unless
+        Ridoku::Base.roles_configured?
+    end
 
     def defaults(type, _input)
       self.input = _input
@@ -29,21 +34,20 @@ module Ridoku
       fail ArgumentError.new(":default and :required lack type: #{type}") unless
         default.key?(type) && required.key?(type)
 
-      fail ArgumentError.new('Inputs :default and :user must be hashes!') unless
-        default[type].is_a?(Hash) && input.is_a?(Hash)
+      fail ArgumentError.new('Inputs :default, :required, and :user must be hashes!') unless
+        default[type].is_a?(Hash) && input.is_a?(Hash) && required[type].is_a?(Hash)
 
-      fail ArgumentError.new('Inputs :required must be an array!') unless
-        required[type].is_a?(Array)
+      type_default = default[type].clone
+      type_required = required[type].clone
 
-      type_default = Hash.clone(default[type])
-      type_required = Hash.clone(required[type])
-
-      required.each do |k|
-        fail ArgumentError.new("User input reuqired: #{k}") unless
-          input.key?(k)
-
-        default[k] = input[k]
+      ap input
+      errors = []
+      required[type].each do |k|
+        errors << k unless input.key?(k.to_s)
+        default[k] = input[k.to_s]
       end
+
+      fail ArgumentError.new("User input required: #{errors}") if errors.length
 
       default
     end

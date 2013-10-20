@@ -1,4 +1,3 @@
-require 'awesome_print'
 #
 # Command: list
 # Description: Used to list all stacks on an AWS OpsStack account.
@@ -57,7 +56,11 @@ module Ridoku
       config = [
         'Current:',
         "  #{$stdout.colorize('Stack', :bold)}: #{Base.config[:stack]}",
-        "  #{$stdout.colorize('App', :bold)}: #{Base.config[:app]}"
+        "  #{$stdout.colorize('App', :bold)}: #{Base.config[:app]}",
+        "  #{$stdout.colorize('Shell User', :bold)}: #{Base.config[:shell_user]}",
+        "  #{$stdout.colorize('Service ARN', :bold)}: #{Base.config[:service_arn]}",
+        "  #{$stdout.colorize('Instance ARN', :bold)}: #{Base.config[:instance_arn]}",
+        "  #{$stdout.colorize('Default SSH Key', :bold)}: #{Base.config[:ssh_key]}",
       ]
       $stdout.puts config
     end
