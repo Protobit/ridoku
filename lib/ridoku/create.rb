@@ -37,12 +37,16 @@ module Ridoku
     end
 
     def stack
+      $stderr.puts 'Create Stack not yet implemented.'
+      $stderr.puts 'Create a Rails stack using OpsWorks Dashboard.'
     end
 
     def app
     end
 
     def instance
+      $stderr.puts 'Create instance not yet implemented.'
+      $stderr.puts 'Create an instance for a given layer using OpsWorks Dashboard.'
     end
   end
 end

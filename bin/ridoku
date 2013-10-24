@@ -117,12 +117,17 @@ opts = GetoptLong.new(
   [ '--set-stack', '-S', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--set-user', '-U', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--set-ssh-key', '-K', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--ssh-key', '-f', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT],
   [ '--stack', '-t', GetoptLong::REQUIRED_ARGUMENT],
   [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--domains', '-d', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--repo', '-r', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--service-arn', '-n', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--instance-arn', '-N', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--practice', '-p', GetoptLong::NO_ARGUMENT ],
   [ '--wizard', '-w', GetoptLong::NO_ARGUMENT ],
 )
@@ -172,6 +177,21 @@ opts.each do |opt, arg|
     end
 
     puts "Default shell user set to: #{arg}"
+  when '--ssh-key'
+    Ridoku::Base.config[:ssh_key] = arg
+
+  when '--repo'
+    Ridoku::Base.config[:repo] = arg
+
+  when '--domains'
+    Ridoku::Base.config[:domains] = arg.split(%r(\||;|:|,))
+
+  when '--service-arn'
+    Ridoku::Base.config[:service_arn] = arg
+
+  when '--instance-arn'
+    Ridoku::Base.config[:instance_arn] = arg
+
   when '--wizard'
     Ridoku::Base.config[:wizard] = true
 
@@ -190,8 +210,8 @@ opts.each do |opt, arg|
   when '--comment'
     Ridoku::Base.config[:comment] = arg
 
-  when '--instance'
-    Ridoku::Base.config[:instances] = arg.split(%r(,|\||;))
+  when '--instances'
+    Ridoku::Base.config[:instances] = arg.split(%r(,|\||;|:))
 
     validate(opt,arg) do |option, argument|
       unless Ridoku::Base.valid_instances?(argument)
