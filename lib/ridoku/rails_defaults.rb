@@ -27,8 +27,8 @@ module Ridoku
           name: :string,
           shortname: :string,
           type: :string,
-
           app_source: {
+            type: :string,
             url: :string,
             ssh_key: :optional
           },
@@ -54,8 +54,8 @@ module Ridoku
           use_custom_cookbooks:true,
           custom_cookbooks_source: {
             type: 'git',
-            url: 'git@github.com:zv1n/chef-cookbooks.git',
-            revision: 'master'
+            url: 'git@github.com:zv1n/ridoku-cookbooks.git',
+            revision: 'stable'
           },
           default_root_device_type: 'instance-store'
         },
@@ -129,7 +129,7 @@ module Ridoku
         },
 
         instance: {
-          instance_type: 't1.micro',
+          instance_type: 'm1.small',
           os: 'Ubuntu 12.04 LTS',
           availability_zone: 'us-west-1a',
           architecture: 'x86_64',
