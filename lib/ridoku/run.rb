@@ -18,7 +18,7 @@ module Ridoku
       when 'shell'
         shell
       else
-        print_cook_help
+        print_run_help
       end
     end
 
@@ -33,12 +33,10 @@ module Ridoku
     end
 
     def create_ssh_path
-      Base.fetch_instance('rails-app')
+      Base.fetch_instance
       Base.fetch_account
 
-      instance = Base.instances.each do |inst|
-        break inst if inst[:status] == 'online'
-      end
+      instance = Base.select_instances(Base.config[:instances]).first
 
       unless instance
         $stderr.puts 'Unable to find a valid instance.'
@@ -47,7 +45,7 @@ module Ridoku
       end
 
       username = Base.account[:user][:user_name].gsub!(/[.]/, '')
-      "#{username}@#{instance[:public_ip]}"
+      "#{username}@#{instance[:elastic_ip] || instance[:public_ip]}"
     end
 
     def ssh_command(command = nil)
@@ -61,7 +59,7 @@ module Ridoku
       
       if Base.permissions[:permissions].first[:allow_sudo]
         chdir = "cd /srv/www/#{Base.app[:shortname]}/current"
-        prefix = "sudo su #{Base.config[:shell_user] || 'deploy'} -c "
+        prefix = "sudo su #{Base.config[:shell_user] || 'root'} -c "
         prompt_cmd = "#{chdir};"
       else
         prompt_cmd = ''
@@ -91,9 +89,11 @@ module Ridoku
   Command: run
 
   Run the specified command on an instance:
-    run       used to run a specified command
-    run:shell used to ssh to the specified instance
-      --instance Used to specify the instance (max: 1)
+    run[:command] run a command (over ssh) in the release directory
+    run:shell     ssh to the specified instance
+      --instance  specify the instance (max: 1)
+      --user      ssh as user (default: root; optionally: <AWS Username>,
+                    or deploy)
 
   examples:
     $ run:shell

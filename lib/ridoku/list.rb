@@ -44,11 +44,12 @@ module Ridoku
     Command: list
 
     List/Modify the current app's database configuration.
-       list         lists stacks or apps if stack is specified
-       list:config  lists current configuration information (app, stack, etc)
-       list:stacks  lists stacks by name
-       list:apps    lists apps if stack is specified
-       list:layers  lists layers if stack is specified
+       list           lists stacks or apps if stack is specified
+       list:config    lists current configuration information (app, stack, etc)
+       list:stacks    lists stacks by name
+       list:apps      lists apps if stack is specified
+       list:layers    lists layers if stack is specified
+       list:instances lists instances by layer
       EOF
     end
 

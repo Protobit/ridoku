@@ -4,6 +4,7 @@ require 'aws'
 require 'logger'
 require 'json'
 require 'getoptlong'
+require 'awesome_print'
 
 require 'io-colorize'
 
@@ -110,7 +111,7 @@ def print_help(full = false)
 end
 
 opts = GetoptLong.new(
-  [ '--debug', '-d', GetoptLong::NO_ARGUMENT ],
+  [ '--debug', '-D', GetoptLong::NO_ARGUMENT ],
   [ '--key', '-k', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--secret', '-s', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--set-app', '-A', GetoptLong::REQUIRED_ARGUMENT ],
@@ -121,7 +122,7 @@ opts = GetoptLong.new(
   [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT],
   [ '--stack', '-t', GetoptLong::REQUIRED_ARGUMENT],
   [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--instance', '-i', GetoptLong::REQUIRED_ARGUMENT ],
+  [ '--instances', '-i', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--domains', '-d', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
   [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT ],
@@ -132,118 +133,126 @@ opts = GetoptLong.new(
   [ '--wizard', '-w', GetoptLong::NO_ARGUMENT ],
 )
 
+opts.quiet = true
+
 Ridoku::Base.load_config(RUNCOM)
 
-opts.each do |opt, arg|
-  case opt
-  when '--debug'
-    Ridoku::Base.config[:debug] = true
+begin
+  opts.each do |opt, arg|
+    case opt
+    when '--debug'
+      Ridoku::Base.config[:debug] = true
 
-  when '--practice'
-    Ridoku::Base.config[:practice] = true
+    when '--practice'
+      Ridoku::Base.config[:practice] = true
 
-  when '--key'
-    ENV['AWS_ACCESS_KEY'] = arg
+    when '--key'
+      ENV['AWS_ACCESS_KEY'] = arg
 
-  when '--secret'
-    ENV['AWS_SECRET_KEY'] = arg
+    when '--secret'
+      ENV['AWS_SECRET_KEY'] = arg
 
-  when '--set-app'
-    Ridoku::Base.config[:app] = arg
-    Ridoku::Base.save_config(RUNCOM)
+    when '--set-app'
+      Ridoku::Base.config[:app] = arg
+      Ridoku::Base.save_config(RUNCOM)
 
-    puts "Default app set to: #{arg}"
-  when '--set-stack'
-    Ridoku::Base.config[:stack] = arg
-    Ridoku::Base.save_config(RUNCOM)
+      puts "Default app set to: #{arg}"
+    when '--set-stack'
+      Ridoku::Base.config[:stack] = arg
+      Ridoku::Base.save_config(RUNCOM)
 
-    puts "Default stack set to: #{arg}"
-  when '--set-user'
-    Ridoku::Base.config[:shell_user] = arg
-    Ridoku::Base.save_config(RUNCOM)
+      puts "Default stack set to: #{arg}"
+    when '--set-user'
+      Ridoku::Base.config[:shell_user] = arg
+      Ridoku::Base.save_config(RUNCOM)
 
-    puts "Default shell user set to: #{arg}"
-  when '--set-ssh-key'
-    Ridoku::Base.config[:ssh_key] = arg
+      puts "Default shell user set to: #{arg}"
+    when '--set-ssh-key'
+      Ridoku::Base.config[:ssh_key] = arg
 
-    validate(opt,arg) do |option, argument|
-      if File.exists?(argument)
-        Ridoku::Base.save_config(RUNCOM)
-      else
-        $stderr.puts 'Specified SSH Key file does not exist!'
-        print_help
-        exit 1
-      end
-    end
-
-    puts "Default shell user set to: #{arg}"
-  when '--ssh-key'
-    Ridoku::Base.config[:ssh_key] = arg
-
-  when '--repo'
-    Ridoku::Base.config[:repo] = arg
-
-  when '--domains'
-    Ridoku::Base.config[:domains] = arg.split(%r(\||;|:|,))
-
-  when '--service-arn'
-    Ridoku::Base.config[:service_arn] = arg
-
-  when '--instance-arn'
-    Ridoku::Base.config[:instance_arn] = arg
-
-  when '--wizard'
-    Ridoku::Base.config[:wizard] = true
-
-  when '--stack'
-    Ridoku::Base.config[:stack] = arg
-
-  when '--user'
-    Ridoku::Base.config[:shell_user] = arg
-
-  when '--layer'
-    Ridoku::Base.config[:layer] = arg
-
-  when '--app'
-    Ridoku::Base.config[:app] = arg
-
-  when '--comment'
-    Ridoku::Base.config[:comment] = arg
-
-  when '--instances'
-    Ridoku::Base.config[:instances] = arg.split(%r(,|\||;|:))
-
-    validate(opt,arg) do |option, argument|
-      unless Ridoku::Base.valid_instances?(argument)
-        $stderr.puts 'Invalid instances provided.'
-
-        validinst = []
-        Ridoku::Base.instances.each do |inst|
-          next unless inst[:status] == 'online'
-          val = "#{inst[:hostname]} [#{inst[:status]}]"
-          validinst << $stderr.colorize(val, [:bold, :green])
+      validate(opt,arg) do |option, argument|
+        if File.exists?(argument)
+          Ridoku::Base.save_config(RUNCOM)
+        else
+          $stderr.puts 'Specified SSH Key file does not exist!'
+          print_help
+          exit 1
         end
-
-        invalidinst = []
-        Ridoku::Base.instances.each do |inst|
-          next unless inst[:status] != 'online'
-          val = "#{inst[:hostname]} [#{inst[:status]}]"
-          invalidinst << $stderr.colorize(val, [:bold, :red])
-        end
-
-        $stderr.puts 'Valid Instances:'
-        $stderr.puts validinst
-        $stderr.puts 'Invalid Instances:'
-        $stderr.puts invalidinst
-
-        puts 'Run the help command to see more.'
-        exit 1
       end
+
+      puts "Default shell user set to: #{arg}"
+    when '--ssh-key'
+      Ridoku::Base.config[:ssh_key] = arg
+
+    when '--repo'
+      Ridoku::Base.config[:repo] = arg
+
+    when '--domains'
+      Ridoku::Base.config[:domains] = arg.split(%r(\||;|:|,))
+
+    when '--service-arn'
+      Ridoku::Base.config[:service_arn] = arg
+
+    when '--instance-arn'
+      Ridoku::Base.config[:instance_arn] = arg
+
+    when '--wizard'
+      Ridoku::Base.config[:wizard] = true
+
+    when '--stack'
+      Ridoku::Base.config[:stack] = arg
+
+    when '--user'
+      Ridoku::Base.config[:shell_user] = arg
+
+    when '--layer'
+      Ridoku::Base.config[:layer] = arg
+
+    when '--app'
+      Ridoku::Base.config[:app] = arg
+
+    when '--comment'
+      Ridoku::Base.config[:comment] = arg
+
+    when '--instances'
+      Ridoku::Base.config[:instances] = arg.split(%r(,|\||;|:))
+
+      validate(opt,arg) do |option, argument|
+        unless Ridoku::Base.valid_instances?(argument)
+          $stderr.puts 'Invalid instances provided.'
+
+          validinst = []
+          Ridoku::Base.instances.each do |inst|
+            next unless inst[:status] != 'stopped'
+            val = "#{inst[:hostname]} [#{inst[:status]}]"
+            validinst << $stderr.colorize(val, [:bold, :green])
+          end
+
+          invalidinst = []
+          Ridoku::Base.instances.each do |inst|
+            next unless inst[:status] != 'online'
+            val = "#{inst[:hostname]} [#{inst[:status]}]"
+            invalidinst << $stderr.colorize(val, [:bold, :red])
+          end
+
+          $stderr.puts 'Valid Instances:'
+          $stderr.puts validinst
+          $stderr.puts 'Invalid Instances:'
+          $stderr.puts invalidinst
+
+          puts 'Run the help command to see more.'
+          exit 1
+        end
+      end
+    else
+      print_help
+      exit 1
     end
-  else
-    print_help
-    exit 1
   end
+rescue => e
+  puts e.to_s
+  print_help
+  exit 1
 end
 
 unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')

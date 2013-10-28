@@ -182,6 +182,10 @@ module Ridoku
           end
 
           self.instances.flatten!
+        else
+          self.instances = self.instance_list.select do |inst|
+            inst[:status] == 'online'
+          end
         end
       end
 
@@ -280,22 +284,39 @@ module Ridoku
 
       def valid_instances?(args)
         args = [args] unless args.is_a?(Array)
+
         return false if args.length == 0
 
-        fetch_instance('rails-app')
+        fetch_instance
 
         inst_names = instances.map do |inst|
           return false if args.index(inst[:hostname]) != nil &&
-            inst[:status] != 'online'
+            inst[:status] == 'stopped'
 
           inst[:hostname]
         end
 
         args.each do |arg|
-          return false if inst_names.index(arg) == nil
+          if inst_names.index(arg) == nil
+            return false
+          end
         end
 
         true
+      end
+
+      def select_instances(args)
+        fetch_instance
+
+        return instances unless args
+
+        args = [args] unless args.is_a?(Array)
+
+        return nil if args.length == 0
+
+        self.instances = instance_list.select do |inst|
+          args.index(inst[:hostname]) != nil
+        end
       end
 
       def pretty_instances(io)

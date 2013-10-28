@@ -104,10 +104,10 @@ module Ridoku
             shortname: 'ridoku-postgres',
             attributes: {
             },
-            auto_assign_elastic_ips:true,
-            auto_assign_public_ips:true,
+            auto_assign_elastic_ips: true,
+            auto_assign_public_ips: true,
             custom_recipes:{
-              setup: [],
+              setup: ['postgresql::ec2_server'],
               configure: [],
               deploy: [],
               undeploy: [],
