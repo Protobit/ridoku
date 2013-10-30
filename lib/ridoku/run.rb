@@ -58,11 +58,8 @@ module Ridoku
         Base.permissions[:permissions].first[:allow_ssh]
       
       if Base.permissions[:permissions].first[:allow_sudo]
-        chdir = "cd /srv/www/#{Base.app[:shortname]}/current"
         prefix = "sudo su #{Base.config[:shell_user] || 'root'} -c "
-        prompt_cmd = "#{chdir};"
       else
-        prompt_cmd = ''
         prefix = ''
       end
 
@@ -73,7 +70,7 @@ module Ridoku
       network_path = create_ssh_path
       bash_command = (command && "-c \\\\\\\"#{chdir} && #{command}\\\\\\\"") || ''
 
-      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{prompt_cmd} #{environ} bash #{bash_command}\\"")
+      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{environ} bash #{bash_command}\\"")
     end
 
     def shell

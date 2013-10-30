@@ -125,7 +125,6 @@ module Ridoku
       $stdout.puts 'Application instances on stack ' +
         "#{$stdout.colorize(Base.stack[:name], [:bold, :green])}:"
 
-
       Base.layer_list.each do |layer|
         selected = Base.config[:instances]
 

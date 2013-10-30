@@ -6,6 +6,20 @@ module Ridoku
     def initialize
       super
 
+      self.warnings = {}.tap do |warn|
+        warn[:app_source] = <<-EOA
+    The App Source is the repository which you wish to pull your application
+    from.  'Type' should be 'git','subversion', etc.  'Url' should be the
+    'git@github:user/repo' url (or appropriate repository URL).  'SSH Key'
+    should be a Private key associated with the repository you pull from.
+EOA
+
+        warn[:domains] = <<-EOB
+    Domains this server should respond to (used for the HTTP server config).
+    Separate each domain with a ':' or '|'.
+EOB
+      end
+
       self.required = {
         stack: {
           service_role_arn: :string,
@@ -112,6 +126,9 @@ module Ridoku
               deploy: [],
               undeploy: [],
               shutdown: []
+            },
+            instance: {
+              root_device_type: 'ebs-backed'
             }
           }
         ],

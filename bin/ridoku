@@ -17,6 +17,7 @@ require 'ridoku/list'
 require 'ridoku/packages'
 require 'ridoku/run'
 require 'ridoku/dump'
+require 'ridoku/create'
 require 'ridoku/version'
 
 require 'ridoku/rails_defaults'
@@ -59,6 +60,7 @@ def print_help(full = false)
       db
       run
       cook
+      create
   EOF
 
   if full
@@ -192,6 +194,9 @@ begin
 
     when '--service-arn'
       Ridoku::Base.config[:service_arn] = arg
+
+    when '--rails-env'
+      Ridoku::Base.config[:rails_env] = arg
 
     when '--instance-arn'
       Ridoku::Base.config[:instance_arn] = arg

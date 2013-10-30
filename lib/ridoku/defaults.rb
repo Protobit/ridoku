@@ -16,21 +16,25 @@ module Ridoku
 
     def initialize
       fail StandardError.new('IAM/OpsWorks permission are not yet configured.') unless
-        Ridoku::Base.roles_configured?
+        Base.roles_configured?
     end
 
-    def defaults(type, _input)
+    def defaults_with_wizard(type, _input)
+      defaults(type, _input, true)
+    end
+
+    def defaults(type, _input, wizard = false)
       self.input = _input
       
       fail ArgumentError.new("No default parameters for type: #{type}") unless
         default.key?(type)
 
-      merge_input(type)
+      merge_input(type, wizard)
     end
 
     protected
 
-    def merge_input(type)
+    def merge_input(type, with_wizard = false)
       fail ArgumentError.new(":default and :required lack type: #{type}") unless
         default.key?(type) && required.key?(type)
 
@@ -38,18 +42,26 @@ module Ridoku
         default[type].is_a?(Hash) && input.is_a?(Hash) && required[type].is_a?(Hash)
 
       type_default = default[type].clone
-      type_required = required[type].clone
 
-      ap input
       errors = []
+      collect = {}
       required[type].each do |k|
-        errors << k unless input.key?(k.to_s)
-        default[k] = input[k.to_s]
+        unless input.key?(k.to_s)
+          errors << k
+          collect[k] = required[k]
+        end
+        type_default[k] = input[k.to_s]
       end
 
-      fail ArgumentError.new("User input required: #{errors}") if errors.length
+      if with_wizard
+        ConfigWizard.fetch_input(input, required[type], warnings)
+        ap input
+      else
+        fail ArgumentError.new("User input required: #{errors}") if
+          errors.length
+      end
 
-      default
+      type_default
     end
   end
 end

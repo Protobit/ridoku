@@ -14,9 +14,9 @@ module Ridoku
     end
 
     def run
-      $stdout.puts ConfigWizard.help_text
+      $stdout.puts $stdout.colorize(help_text, :bold)
 
-      $stdout.puts 'Do you wish to run the wizard now? [Y|n]'
+      $stdout.puts "Do you wish to run the wizard now? [#{$stdout.colorize('Y', :bold)}|n]"
       res = $stdin.gets
       if res.match(%r(^[Nn]))
         Base.config[:local_init] = true
@@ -32,7 +32,7 @@ module Ridoku
     Leave the field blank to attempt to generate one or to refresh from account
     credentials. 's' or 'skip' if you wish to use existing values.
 
-    Current Service ARN: #{Base.config[:service_arn]}
+    #{$stdout.colorize('Current Service ARN:',:bold)} #{Base.config[:service_arn]}
     EOF
       inst_info = <<-EOF
     Instance Profile ARN is used to for each instance created for OpsWorks.
@@ -41,7 +41,7 @@ module Ridoku
     Leave the field blank to attempt to generate one or to refresh from account
     credentials. 's' or 'skip' if you wish to use existing values.
 
-    Current Instance ARN: #{Base.config[:instance_arn]}
+    #{$stdout.colorize('Current Instance ARN:',:bold)} #{Base.config[:instance_arn]}
     EOF
       info = {
         service_role_arn: sra_info,
@@ -74,25 +74,10 @@ module Ridoku
       exit 0
     end
 
-    class << self
-
-      def fetch_input(output, required = {}, info = {})
-        info.merge!({
-          ssh_key: <<-EOF
-    Key files (such as SSH keys) should be provided by file path.  In the case of
-    GIT repository SSH keys (custom cookbooks, application respository), these 
-    should be to the private keys.  I recommend generating keys specifically for 
-    each use, so that the keys can be easily tracked and removed if necessary,
-    without requiring you replace your keys on every machine you access.
-    Enter 's' or 'skip' if you wish to keep the currently configured value.
-    EOF
-        })
-
-        recurse_required(required, output, info)
-      end
-
-      def help_text
-        help = <<-EOF
+    protected
+    
+    def help_text
+      help = <<-EOF
 Configuration Wizard:
 
 In order to get ridoku configured with your OpsWorks account, Ridoku must 
@@ -116,6 +101,24 @@ Values to be configured:
     generate one for you.  If you've already used OpsWorks, Ridoku should be
     able to find the necessary Roles for you.
         EOF
+    end
+
+    class << self
+
+      def fetch_input(output, required = {}, info = {})
+        info ||= {}
+        info.merge!({
+          ssh_key: <<-EOF
+    Key files (such as SSH keys) should be provided by file path.  In the case of
+    GIT repository SSH keys (custom cookbooks, application respository), these 
+    should be to the private keys.  I recommend generating keys specifically for 
+    each use, so that the keys can be easily tracked and removed if necessary,
+    without requiring you replace your keys on every machine you access.
+    Enter 's' or 'skip' if you wish to keep the currently configured value.
+    EOF
+        })
+
+        recurse_required(required, output, info)
       end
 
       protected
@@ -124,13 +127,14 @@ Values to be configured:
       def recurse_required(req, user, info)
         req.each do |k,v|
           if v.is_a?(Hash)
-            puts "In #{k}:"
-            recurse_required(v, user[k] = {}, info)
+            info_for(k, info)
+            $stdout.puts "In #{$stdout.colorize(k, :bold)}:"
+            recurse_required(v, user[k] ||= {}, info)
           else
+            next if user[k]
             puts '-'*80
             info_for(k, info)
-            puts "For #{k} (#{v}):"
-
+            $stdout.puts "For #{$stdout.colorize(k, :bold)} (#{$stdout.colorize(v, :red)}):"
             get_response(user, k, v)
           end
         end
@@ -169,6 +173,8 @@ Values to be configured:
         when :arn_string
           fail ArgumentError.new('Invalid ARN provided.') unless
             value.match(/^.*:.*:.*:.*:([0-9]+):.*$||/)
+        when :array
+          value = value.split(%r([^\\](:|\|)))
         end
 
         value
@@ -176,7 +182,7 @@ Values to be configured:
 
       # Print warning info associated with a particular attributes.
       def info_for(key, info)
-        $stdout.puts info[key] if info.key?(key)
+        $stdout.puts $stdout.colorize(info[key], [:bold, :green]) if info.key?(key)
       end
     end
   end

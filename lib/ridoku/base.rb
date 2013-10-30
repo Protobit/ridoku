@@ -165,8 +165,7 @@ module Ridoku
         return instances if instances && !options[:force]
 
         fetch_stack
-
-        self.instances = self.instance_list =
+        self.instance_list = self.instances =
           aws_client.describe_instances(stack_id: stack[:stack_id])[:instances]
 
         if shortname != :all
@@ -182,10 +181,6 @@ module Ridoku
           end
 
           self.instances.flatten!
-        else
-          self.instances = self.instance_list.select do |inst|
-            inst[:status] == 'online'
-          end
         end
       end
 
@@ -242,7 +237,7 @@ module Ridoku
 
       def roles_configured?
         fetch_roles
-        service_role_confifured? && instance_role_configured?
+        service_role_configured? && instance_role_configured?
       end
 
       def service_role_configured?
@@ -282,6 +277,10 @@ module Ridoku
         $stderr.puts config.to_json
       end
 
+      def create_app(config)
+        $stderr.puts config.to_json
+      end
+
       def valid_instances?(args)
         args = [args] unless args.is_a?(Array)
 
@@ -290,12 +289,14 @@ module Ridoku
         fetch_instance
 
         inst_names = instances.map do |inst|
+          # if requested is stop, its definitely invalid.
           return false if args.index(inst[:hostname]) != nil &&
             inst[:status] == 'stopped'
 
           inst[:hostname]
         end
 
+        # if a requested is not in the list, then its an invalid list.
         args.each do |arg|
           if inst_names.index(arg) == nil
             return false
@@ -307,11 +308,9 @@ module Ridoku
 
       def select_instances(args)
         fetch_instance
-
-        return instances unless args
+        return instances_list unless args
 
         args = [args] unless args.is_a?(Array)
-
         return nil if args.length == 0
 
         self.instances = instance_list.select do |inst|
