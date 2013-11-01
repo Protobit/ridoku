@@ -120,6 +120,7 @@ EOB
             },
             auto_assign_elastic_ips: true,
             auto_assign_public_ips: true,
+            custom_security_group_ids: ['Ridoku-PostgreSQL-Server'],
             custom_recipes:{
               setup: ['postgresql::ec2_server'],
               configure: [],

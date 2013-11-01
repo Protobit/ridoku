@@ -32,7 +32,7 @@ module Ridoku
     Leave the field blank to attempt to generate one or to refresh from account
     credentials. 's' or 'skip' if you wish to use existing values.
 
-    #{$stdout.colorize('Current Service ARN:',:bold)} #{Base.config[:service_arn]}
+    #{$stdout.colorize('Current Service ARN:', [:white, :bold])} #{$stdout.colorize(Base.config[:service_arn], :green)}
     EOF
       inst_info = <<-EOF
     Instance Profile ARN is used to for each instance created for OpsWorks.
@@ -41,7 +41,7 @@ module Ridoku
     Leave the field blank to attempt to generate one or to refresh from account
     credentials. 's' or 'skip' if you wish to use existing values.
 
-    #{$stdout.colorize('Current Instance ARN:',:bold)} #{Base.config[:instance_arn]}
+    #{$stdout.colorize('Current Instance ARN:', [:white, :bold])} #{$stdout.colorize(Base.config[:instance_arn], :green)}
     EOF
       info = {
         service_role_arn: sra_info,
@@ -68,7 +68,11 @@ module Ridoku
         Base.config[:instance_arn] = Base.config[:instance_profile_arn]
       end
 
+      Base.config[:local_init] = true
       Base.save_config(::RUNCOM)
+
+      $stdout.puts 'Updating required Security Groups'
+      Base.update_pg_security_groups_in_all_regions
 
       $stdout.puts 'Configuration complete.'
       exit 0
@@ -182,7 +186,7 @@ Values to be configured:
 
       # Print warning info associated with a particular attributes.
       def info_for(key, info)
-        $stdout.puts $stdout.colorize(info[key], [:bold, :green]) if info.key?(key)
+        $stdout.puts $stdout.colorize(info[key], :bold) if info.key?(key)
       end
     end
   end

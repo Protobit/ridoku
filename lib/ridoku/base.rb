@@ -20,9 +20,11 @@ module Ridoku
     class << self
       attr_accessor :config, :aws_client, :iam_client, :stack, :custom_json,
         :app, :layers, :instances, :account, :permissions, :stack_list,
-        :app_list, :layer_list, :instance_list, :account_id
+        :app_list, :layer_list, :instance_list, :account_id, :ec2_client
 
       @config = {}
+
+      POSTGRES_GROUP_NAME = 'Ridoku-PostgreSQL-Server'
 
       def load_config(path)
         if File.exists?(path)
@@ -189,6 +191,55 @@ module Ridoku
 
         iam = AWS::IAM.new
         self.iam_client = iam.client
+      end
+
+      def configure_ec2_client
+        return if self.ec2_client
+
+        self.ec2_client = AWS::EC2.new
+      end
+
+      def postgresql_group_exists?(region = 'us-west-1')
+        configure_ec2_client
+
+        ec2_client.security_groups.filter('group-name', POSTGRES_GROUP_NAME).length > 0
+      end
+
+      def update_pg_security_groups_in_all_regions
+        AWS.regions.each do |region|
+          $stdout.puts "Checking region: #{region.name}"
+          update_pg_security_group(region.ec2)
+        end
+      end
+
+      def update_pg_security_group(client = self.ec2_client)
+        fetch_stack
+
+        port = 5432
+
+        if custom_json.key?(:postgresql) &&
+          custom_json[:postgresql].key?(:config)
+          custom_json[:postgresql][:config].key?(:port)
+          port = custom_json[:postgresql][:config][:port]
+        end
+
+        perm_match = false
+        group = client.security_groups.filter('group-name', POSTGRES_GROUP_NAME).first
+
+        unless group
+          $stdout.puts "Creating security group: #{POSTGRES_GROUP_NAME} in #{client.regions.first.name}"
+          group = client.security_groups.create(POSTGRES_GROUP_NAME)
+        else
+          group.ingress_ip_permissions.each do |ipperm|
+            if ipperm.protocol == :tcp && ipperm.port_range == port..port
+              perm_match = true
+            else
+              ipperm.revoke
+            end
+          end
+        end
+
+        group.authorize_ingress(:tcp, port) unless perm_match
       end
 
       def fetch_account(options = {})
