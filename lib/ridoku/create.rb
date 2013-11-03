@@ -12,12 +12,8 @@ module Ridoku
       type = (command.length > 1 && command[2]) || nil
 
       case sub_command
-      when 'stack'
-        stack(type || 'rails')
       when 'app'
         app(type || 'rails')
-      when 'instance'
-        instance
       else
         print_create_help
       end
@@ -25,29 +21,38 @@ module Ridoku
 
     protected
 
-    def print_create_help
-      $stderr.puts <<-EOF
-  Command: create
+    def configure_from_cwd(opt)
+      return unless File.exists?('.git')
 
-  List/Modify the current layer's package dependencies.
-    create                      show this help
-    create:stack[:rails] <name> create a full stack ('rails' only currently)
-    create:app[:rails] <name>   create a new app on the --stack
-    create:instance             create an instance on the --layer
-  EOF
+      `git remote -v | grep fetch`.match(%r(origin\s*(git@[^\s]*).*)) do |m|
+        opt[:type] = 'git'
+        opt[:url] = m[1]
+        $stdout.puts "Setting Git Application Source from environment:"
+        $stdout.puts "Url: #{$stdout.colorize(m[1], :green)}"
+      end
     end
 
-    def stack(type)
-      $stderr.puts 'Create Stack not yet implemented.'
-      $stderr.puts 'Create a Rails stack using OpsWorks Dashboard.'
+    def print_create_help
+      $stderr.puts <<-EOF
+Command: create
+
+List/Modify the current layer's package dependencies.
+  create                      show this help
+  create:app[:rails] <name>   create a new app on the --stack
+
+Currently, if the stack does not exist for a particular app type, you
+will have to create it manually.
+  EOF
     end
 
     def app(type)
       Base.fetch_stack
 
-      #TODO: Extract some of the extra information from the environment!
-      # Git/Svn? Pull from the repo.
-      # 
+      unless ARGV.length > 0
+        $stderr.puts $stderr.colorize('App name not specified', :red)
+        print_create_help
+        exit 1
+      end
 
       config = {
           type: type,
@@ -58,6 +63,7 @@ module Ridoku
       config.tap do |opt| 
           opt[:domains] = Base.config[:domains] if Base.config.key?(:domains)
           opt[:app_source] = {}.tap do |as|
+            configure_from_cwd(as)
             as[:ssh_key] = Base.config[:ssh_key] if Base.config.key?(:ssh_key)
           end
           opt[:attributes] = {}.tap do |atr|
@@ -67,7 +73,11 @@ module Ridoku
 
       appconfig = RailsDefaults.new.defaults_with_wizard(:app, config)
 
-      Base.create_app(config)
+      begin
+        Base.create_app(appconfig)
+      rescue ::ArgumentError => e
+        $stderr.puts e.to_s
+      end
     end
 
     def instance

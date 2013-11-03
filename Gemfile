@@ -11,3 +11,6 @@ gem 'json'
 
 # Used for interacting with git
 gem 'rugged'
+
+# for deep merge
+gem 'activesupport'

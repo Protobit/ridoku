@@ -128,16 +128,19 @@ Values to be configured:
       protected
 
       # Recurse through required hash to collected all necessary information.
-      def recurse_required(req, user, info)
+      def recurse_required(req, user, info, buffer = '')
         req.each do |k,v|
           if v.is_a?(Hash)
-            info_for(k, info)
-            $stdout.puts "In #{$stdout.colorize(k, :bold)}:"
-            recurse_required(v, user[k] ||= {}, info)
+            buffer += info_for(k, info)
+            buffer += "In #{$stdout.colorize(k, :bold)}:"
+            recurse_required(v, user[k] ||= {}, info, buffer)
+            buffer = ''
           else
             next if user[k]
-            puts '-'*80
-            info_for(k, info)
+            $stdout.puts '-'*80
+            $stdout.puts buffer if buffer.length > 0
+            info_block = info_for(k, info)
+            $stdout.puts info_block if info_block.length > 0
             $stdout.puts "For #{$stdout.colorize(k, :bold)} (#{$stdout.colorize(v, :red)}):"
             get_response(user, k, v)
           end
@@ -186,7 +189,8 @@ Values to be configured:
 
       # Print warning info associated with a particular attributes.
       def info_for(key, info)
-        $stdout.puts $stdout.colorize(info[key], :bold) if info.key?(key)
+        return $stdout.colorize(info[key], :bold) if info.key?(key)
+        ''
       end
     end
   end

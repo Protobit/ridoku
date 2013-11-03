@@ -3,6 +3,7 @@
 
 require 'aws'
 require 'awesome_print'
+require 'active_support/inflector'
 
 module Ridoku
   class InvalidConfig < StandardError
@@ -324,12 +325,36 @@ module Ridoku
         opsworks_role_arn = "arn:aws:iam::#{account_id}:#{opsworks_resource}"
       end
 
-      def create_role(config)
-        $stderr.puts config.to_json
+      def create_role(conf)
+        $stderr.puts conf.to_json
       end
 
-      def create_app(config)
-        $stderr.puts config.to_json
+      def create_app(conf)
+        conf[:stack_id] = stack[:stack_id]
+
+        ap 'ap'
+        ap conf
+        # Ensure key exists
+        key_file = conf[:app_source][:ssh_key]
+        
+        fail ArgumentError.new('Key file doesn\'t exist.') unless
+          File.exists?(key_file)
+
+        File.open(key_file, 'r') { |f| conf[:app_source][:ssh_key] = f.read }
+
+        # Config[:attributes] must be a hash of <string,string> type.
+        conf[:attributes].tap do |opt|
+          opt.keys.each do |k|
+            opt[k.to_s.camelize] = opt.delete(k).to_s unless k.is_a?(String)
+          end
+        end
+
+        # Ensure attribute 'rails_env' is specified
+
+        fail ArgumentError.new('attribute:rails_env must be specified.') unless
+          conf[:attributes]['RailsEnv'].length > 0
+
+        aws_client.create_app(conf)
       end
 
       def valid_instances?(args)

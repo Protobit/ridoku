@@ -2,6 +2,8 @@
 # Base class for Component Generation
 #
 
+require 'active_support/core_ext/hash/deep_merge'
+
 module Ridoku
   class PropertyDefaultsUndefined < StandardError
     attr_accessor :method
@@ -41,21 +43,20 @@ module Ridoku
       fail ArgumentError.new('Inputs :default, :required, and :user must be hashes!') unless
         default[type].is_a?(Hash) && input.is_a?(Hash) && required[type].is_a?(Hash)
 
-      type_default = default[type].clone
+      type_default = default[type].deep_merge(input)
 
       errors = []
       collect = {}
+
       required[type].each do |k|
-        unless input.key?(k.to_s)
+        unless input.key?(k)
           errors << k
           collect[k] = required[k]
         end
-        type_default[k] = input[k.to_s]
       end
 
       if with_wizard
-        ConfigWizard.fetch_input(input, required[type], warnings)
-        ap input
+        ConfigWizard.fetch_input(type_default, required[type], warnings)
       else
         fail ArgumentError.new("User input required: #{errors}") if
           errors.length

@@ -322,4 +322,6 @@ rescue Ridoku::NoSshAccess
   $stderr.puts 'Your user does not have access to ssh on the specified stack.'
   print_help
   exit 1
+rescue ArgumentError => e
+  $stderr.puts e.to_s
 end
