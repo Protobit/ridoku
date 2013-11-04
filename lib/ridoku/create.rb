@@ -47,9 +47,20 @@ will have to create it manually.
 
     def app(type)
       Base.fetch_stack
+      Base.fetch_app
 
       unless ARGV.length > 0
         $stderr.puts $stderr.colorize('App name not specified', :red)
+        print_create_help
+        exit 1
+      end
+
+      existing = Base.app_list.select do |app|
+        app[:name] == ARGV[0]
+      end
+
+      if existing.length > 0
+        $stderr.puts $stderr.colorize("App #{ARGV[0]} already exists", :red)
         print_create_help
         exit 1
       end

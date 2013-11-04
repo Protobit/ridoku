@@ -4,6 +4,7 @@
 require 'aws'
 require 'awesome_print'
 require 'active_support/inflector'
+require 'securerandom'
 
 module Ridoku
   class InvalidConfig < StandardError
@@ -326,14 +327,16 @@ module Ridoku
       end
 
       def create_role(conf)
-        $stderr.puts conf.to_json
+        if config[:practice]
+          ap conf
+        else
+          iam_client.create_role(conf)
+        end
       end
 
       def create_app(conf)
         conf[:stack_id] = stack[:stack_id]
 
-        ap 'ap'
-        ap conf
         # Ensure key exists
         key_file = conf[:app_source][:ssh_key]
         
@@ -350,11 +353,77 @@ module Ridoku
         end
 
         # Ensure attribute 'rails_env' is specified
-
         fail ArgumentError.new('attribute:rails_env must be specified.') unless
           conf[:attributes]['RailsEnv'].length > 0
 
-        aws_client.create_app(conf)
+        if config[:practice]
+          ap conf
+        else
+          aws_client.create_app(conf)
+          initialize_app_environment(conf)
+        end
+      end
+
+      def initialize_app_environment(conf)
+        fetch_stack
+        fetch_layer
+        fetch_instance
+
+        app_layer = layer_list.select do |lyr|
+          lyr[:shortname] == 'rails-app'
+        end.first
+
+        db_layer = layer_list.select do |lyr|
+          lyr[:shortname] == 'ridoku-postgresql'
+        end.first
+
+        deploy_info = custom_json['deploy']
+
+        app = conf[:shortname]
+
+        instance = instances.select do |inst|
+          inst[:status] == 'online' &&
+            inst[:layer_ids].index(app_layer[:layer_id]) != nil
+        end.first
+
+        db_instance = instances.select do |inst|
+          inst[:layer_ids].index(db_layer[:layer_id]) != nil
+        end.first
+
+        dbase_info = {
+          database: app,
+          username: SecureRandom.hex(12),
+          user_password: SecureRandom.hex(12)
+        }
+
+        ((custom_json['postgresql'] ||= {})['databases'] ||= []) << dbase_info
+
+        deploy_info[app] = {
+          auto_assets_precompile_on_deploy: true,
+          assetmaster: instance[:hostname],
+          app_env: {
+            'RAILS_ENV' => conf[:attributes]['RailsEnv']
+          },
+          database: {
+            adapter: 'postgresql',
+            username: dbase_info[:username],
+            database: dbase_info[:database],
+            host: db_instance[:public_ip],
+            password: dbase_info[:user_password],
+            port: custom_json['postgresql']['config']['port']
+          }
+        }
+
+        save_stack
+
+        # Update add our changes to the database.
+        deploy({
+          instance_ids: [db_instance[:instance_id]],
+          command: {
+            name: 'execute_recipes',
+            args: { 'recipes' => 'postgresql::create_databases' }
+          }
+        })
       end
 
       def valid_instances?(args)

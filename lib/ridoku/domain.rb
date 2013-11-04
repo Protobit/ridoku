@@ -30,8 +30,7 @@ module Ridoku
 
     def load_environment
       Base.fetch_app
-
-      self.domains = Base.app[:domains]
+      self.domains = (Base.app[:domains] ||= [])
     end
 
     def print_domain_help
