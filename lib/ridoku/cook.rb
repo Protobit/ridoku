@@ -29,11 +29,15 @@ module Ridoku
     protected
 
     def extract_instance_ids
-      Base.fetch_instance(Base.config[:layers] || 'rails-app') unless
-        Base.instances
+      Base.fetch_instance(Base.config[:layers] || :all)
 
+      names = Base.config[:instances] || []
       instances = Base.instances.select do |inst|
-         inst[:status] == 'online'
+        if names.length > 0
+          names.index(inst[:hostname]) != nil && inst[:status] != 'offline'
+        else
+          inst[:status] == 'online'
+        end
       end
 
       instances.map do |inst|
