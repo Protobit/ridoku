@@ -219,10 +219,10 @@ module Ridoku
 
         port = 5432
 
-        if custom_json.key?(:postgresql) &&
-          custom_json[:postgresql].key?(:config)
-          custom_json[:postgresql][:config].key?(:port)
-          port = custom_json[:postgresql][:config][:port]
+        if custom_json.key?('postgresql') &&
+          custom_json['postgresql'].key?('config')
+          custom_json['postgresql']['config'].key?('port')
+          port = custom_json['postgresql']['config']['port']
         end
 
         perm_match = false
