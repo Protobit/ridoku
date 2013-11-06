@@ -520,6 +520,7 @@ module Ridoku
             cmd[:status] == 'successful'
           end
 
+          # Show we are still thinking...
           case time % 4
           when 0
             print "\\\r"
@@ -536,17 +537,24 @@ module Ridoku
             return
           end
 
+          # Collect the non-[running,pending,successful] command entries
           not_ok = cmds[:commands].select do |cmd|
             ['running', 'pending', 'successful'].index(cmd[:status]) == nil 
           end.map do |cmd|
-            { command: cmd, instance: instance_by_id(cmd[:instance_id]) }
+            { 
+              command: cmd,
+              instance: instance_by_id(cmd[:instance_id])
+            }
           end
 
+          # Print each one that has failed.
           not_ok.each do |item|
-            $stderr.puts "#{item[:instance][:hostname]}, status: #{item[:command][:status]}"
+            $stderr.puts "#{item[:instance][:hostname]}, status: " +
+              "#{$stderr.colorize(item[:command][:status], :red)}"
+            exit 1
           end
 
-          sleep 3
+          sleep 5
         end
       end
     end
