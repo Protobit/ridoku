@@ -469,10 +469,13 @@ module Ridoku
 
       def pretty_instances(io)
         inststr = []
+
         instances.each do |inst|
           val = "#{inst[:hostname]} [#{inst[:status]}]"
-          inststr << io.colorize(val, [ :bold, inst[:status] == 'online' ? :green : :red ])
+          inststr << io.colorize(val, 
+            [:bold, inst[:status] == 'online' ? :green : :red])
         end
+
         inststr
       end
 
@@ -513,7 +516,8 @@ module Ridoku
           $stdout.puts "  #{$stdout.colorize(cmd[:instance][:hostname], :green)}"
         end
 
-        100.times do |time|
+        # Iterate a reasonable number of times... 100*5 => 500 seconds
+        300.times do |time|
           cmds = aws_client.describe_commands(deployment_id: dep_ids)
 
           success = cmds[:commands].select do |cmd|
@@ -539,7 +543,7 @@ module Ridoku
 
           # Collect the non-[running,pending,successful] command entries
           not_ok = cmds[:commands].select do |cmd|
-            ['running', 'pending', 'successful'].index(cmd[:status]) == nil 
+            ['running', 'pending', 'successful'].index(cmd[:status]) == nil
           end.map do |cmd|
             { 
               command: cmd,
@@ -549,8 +553,10 @@ module Ridoku
 
           # Print each one that has failed.
           not_ok.each do |item|
-            $stderr.puts "#{item[:instance][:hostname]}, status: " +
-              "#{$stderr.colorize(item[:command][:status], :red)}"
+            $stderr.puts "#{item[:instance][:hostname]}"
+            $stderr.puts " Status: " +
+              $stderr.colorize(item[:command][:status], :red)
+            $stderr.puts " Url: " + item[:command][:log_url]
             exit 1
           end
 
