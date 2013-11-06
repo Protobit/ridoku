@@ -100,8 +100,8 @@ module Ridoku
         self.app_list = aws_client.describe_apps(stack_id: stack[:stack_id])[:apps]
         self.app = nil
 
-        app_list.each do |ap|
-          self.app = ap if app_name == ap[:name]
+        app_list.each do |sapp|
+          self.app = sapp if app_name == sapp[:name]
         end
 
         fail InvalidConfig.new(:app, :invalid) unless app
@@ -161,6 +161,10 @@ module Ridoku
         aws_client.update_layer(save_info)
       end
 
+      def instance_by_id(id)
+        fetch_instance
+        instance_list.select { |is| is[:instance_id] == id }.first
+      end
 
       # 'lb' - load balancing layers
       # 'rails-app'
@@ -488,9 +492,61 @@ module Ridoku
               inst[:status], inst[:status] == 'online' ? :green : :red)}"
           end
         else
-          aws_client.create_deployment(deployment)
+          depid = aws_client.create_deployment(deployment)[:deployment_id]
+
           $stdout.puts $stdout.colorize('Command Sent', :green) if
             config[:verbose]
+
+          monitor_deployment(depid)
+        end
+      end
+
+      def monitor_deployment(dep_ids)
+        cmds = aws_client.describe_commands(deployment_id: dep_ids)
+
+        commands = cmds[:commands].map do |cmd|
+          { command: cmd, instance: instance_by_id(cmd[:instance_id]) }
+        end
+
+        $stdout.puts "Command issued to #{commands.length} instances:"
+        commands.each do |cmd|
+          $stdout.puts "  #{$stdout.colorize(cmd[:instance][:hostname], :green)}"
+        end
+
+        100.times do |time|
+          cmds = aws_client.describe_commands(deployment_id: dep_ids)
+
+          success = cmds[:commands].select do |cmd|
+            cmd[:status] == 'successful'
+          end
+
+          case time % 4
+          when 0
+            print "\\\r"
+          when 1
+            print "|\r"
+          when 2
+            print "/\r"
+          when 3
+            print "-\r"
+          end
+
+          if cmds.length == success.length
+            $stdout.puts 'Command executed successfully.'
+            return
+          end
+
+          not_ok = cmds[:commands].select do |cmd|
+            ['running', 'pending', 'successful'].index(cmd[:status]) == nil 
+          end.map do |cmd|
+            { command: cmd, instance: instance_by_id(cmd[:instance_id]) }
+          end
+
+          not_ok.each do |item|
+            $stderr.puts "#{item[:instance][:hostname]}, status: #{item[:command][:status]}"
+          end
+
+          sleep 3
         end
       end
     end
