@@ -269,8 +269,15 @@ end
 AWS.config(config)
 
 if !Ridoku::Base.config[:local_init] || Ridoku::Base.config[:wizard]
-  wizard = Ridoku::ConfigWizard.new
-  wizard.run
+  begin
+    wizard = Ridoku::ConfigWizard.new
+    wizard.run
+  rescue Ridoku::InvalidConfig => e
+    $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
+    $stderr.puts 'Use the `list` command to see relavent info.'
+    print_help
+    exit 1
+  end
 end
 
 validate_arguments

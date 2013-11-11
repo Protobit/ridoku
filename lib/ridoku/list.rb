@@ -67,7 +67,7 @@ module Ridoku
     end
 
     def stacks
-      Base.fetch_stack
+      Base.fetch_stack(force: true)
 
       stack_arr = Base.stack_list.map do |stack|
         name = stack[:name]

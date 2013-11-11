@@ -65,7 +65,8 @@ module Ridoku
 
         stack_name = config[:stack]
 
-        fail InvalidConfig.new(:stack, :none) unless stack_name
+        fail InvalidConfig.new(:stack, :none) unless stack_name ||
+          !options[:force]
 
         self.stack_list = aws_client.describe_stacks[:stacks]
         self.stack = nil
@@ -74,7 +75,8 @@ module Ridoku
           self.stack = stck if stack_name == stck[:name]
         end
 
-        fail InvalidConfig.new(:stack, :invalid) unless stack
+        fail InvalidConfig.new(:stack, :invalid) if !stack &&
+          !options[:force]
 
         self.custom_json = JSON.parse(stack[:custom_json]) if stack
 
