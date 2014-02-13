@@ -1,5 +1,4 @@
 
-require 'awesome_print'
 
 module Ridoku
   class ConfigWizard

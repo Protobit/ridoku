@@ -2,7 +2,6 @@
 # Base Ridoku class for running commands
 
 require 'aws'
-require 'awesome_print'
 require 'active_support/inflector'
 require 'securerandom'
 
@@ -334,7 +333,7 @@ module Ridoku
 
       def create_role(conf)
         if config[:practice]
-          ap conf
+          puts conf.to_s
         else
           iam_client.create_role(conf)
         end
@@ -363,7 +362,7 @@ module Ridoku
           conf[:attributes]['RailsEnv'].length > 0
 
         if config[:practice]
-          ap conf
+          $stdout.puts conf.to_s
         else
           aws_client.create_app(conf)
           initialize_app_environment(conf)

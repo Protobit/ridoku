@@ -4,7 +4,6 @@ require 'aws'
 require 'logger'
 require 'json'
 require 'getoptlong'
-require 'awesome_print'
 
 require 'io-colorize'
 
@@ -83,18 +82,18 @@ def print_help(full = false)
 
       If you have a stack configured, you can view pertinent information using
       
-      $ ridoku-cli list:stacks
+      $ ridoku list:stacks
 
       This will display the stacks that are currently associated with your AWS
       account.  To 
 
       To set the specific stack to use:
 
-      $ ridoku-cli --set-stack <stackname>
+      $ ridoku --set-stack <stackname>
 
       To set a single run stack or override the default:
 
-      $ ridoku-cli --stack <stackname> --app <appname> command...
+      $ ridoku --stack <stackname> --app <appname> command...
 
     Apps:  The actual application which runs on the technology stack.
 
@@ -104,11 +103,11 @@ def print_help(full = false)
 
       To set the default app to use:
 
-      $ ridoku-cli --set-app <stackname>
+      $ ridoku --set-app <stackname>
 
       To set a specific run app or override the default:
 
-      $ ridoku-cli --stack <stackname> --app <appname> command...
+      $ ridoku --stack <stackname> --app <appname> command...
   EOF
   end
 end
