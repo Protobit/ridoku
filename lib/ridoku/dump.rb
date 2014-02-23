@@ -102,13 +102,13 @@ module Ridoku
     end
 
     def stack(st, multiple = false)
-      $stdout.print st.to_json
+      $stdout.print JSON.generate(st.to_hash)
       $stdout.print ',' if multiple
       $stdout.puts
     end
 
     def custom(st, multiple = false)
-      $stdout.print st[:custom_json].to_json
+      $stdout.print st[:custom_json]
       $stdout.print ',' if multiple
       $stdout.puts
     end
