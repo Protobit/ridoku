@@ -4,6 +4,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :create
+
   class Create < Base
 
     def run

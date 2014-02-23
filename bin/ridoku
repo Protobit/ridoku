@@ -7,6 +7,9 @@ require 'getoptlong'
 
 require 'io-colorize'
 
+require 'ridoku'
+require 'options'
+
 require 'require_all'
 require_rel '../lib/ridoku'
 
@@ -33,21 +36,30 @@ def validate_arguments
   end
 end
 
+def print_options
+  $stderr.puts 'Options:'
+  Ridoku.options.each do |opt|
+    $stderr.puts "  #{opt[0]}/#{opt[1]} #{opt[3]}"
+    $stderr.puts
+  end
+end
+
+def print_commands
+  $stderr.puts <<-EOF
+Commands:
+  #{$stderr.colorize(Ridoku.commands.join("\n  "), :bold)}
+
+EOF
+end
+
 def print_help(full = false)
   $stderr.puts <<-EOF
-  Ridoku, #{Ridoku::VERSION}
-  usage: ridoku [OPTIONS] command [command options]
+Ridoku, #{Ridoku::VERSION}
+usage: ridoku [OPTIONS] command [command options]
 
-    commands:
-      list
-      config
-      deploy
-      domain
-      db
-      run
-      cook
-      create
-  EOF
+EOF
+  print_commands
+  print_options
 
   if full
     $stderr.puts <<-EOF
@@ -99,26 +111,7 @@ def print_help(full = false)
 end
 
 opts = GetoptLong.new(
-  [ '--debug', '-D', GetoptLong::NO_ARGUMENT ],
-  [ '--key', '-k', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--secret', '-s', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--set-app', '-A', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--set-stack', '-S', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--set-user', '-U', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--set-ssh-key', '-K', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--ssh-key', '-f', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--app', '-a', GetoptLong::REQUIRED_ARGUMENT],
-  [ '--stack', '-t', GetoptLong::REQUIRED_ARGUMENT],
-  [ '--comment', '-m', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--instances', '-i', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--domains', '-d', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--user', '-u', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--repo', '-r', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--service-arn', '-n', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--instance-arn', '-N', GetoptLong::REQUIRED_ARGUMENT ],
-  [ '--practice', '-p', GetoptLong::NO_ARGUMENT ],
-  [ '--wizard', '-w', GetoptLong::NO_ARGUMENT ],
+  *Ridoku.options.map { |opt| opt[0..2] }
 )
 
 opts.quiet = true

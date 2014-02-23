@@ -21,6 +21,8 @@ end
 require_rel 'services/'
 
 module Ridoku
+  register :service
+
   class Service < Base
     attr_accessor :services
 

@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :run
+
   class Run < Base
     attr_accessor :environment
     

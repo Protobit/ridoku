@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :workers
+
   class Worker < Base
     attr_accessor :workers
 

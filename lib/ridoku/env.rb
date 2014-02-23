@@ -9,6 +9,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :env
+
   class Env < Base
     attr_accessor :environment
 

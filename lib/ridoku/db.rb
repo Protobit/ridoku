@@ -9,6 +9,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :db
+
   class Db < Base
     attr_accessor :dbase
 

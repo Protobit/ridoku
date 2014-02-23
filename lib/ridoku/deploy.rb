@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :deploy
+
   class Deploy < Base
     attr_accessor :app
 

@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :backup
+
   class Backup < Base
     attr_accessor :services
 
@@ -15,9 +17,14 @@ module Ridoku
 
       case sub_command
       when 'stack'
-        backup_stack ARGV
-      when 'app'
-        backup_stack ARGV
+        action = command.shift
+        if action.nil? || action == 'store'
+          backup_stack(ARGV)
+        elsif action == 'restore'
+          restore_stack(ARGV)
+        else
+          print_backup_help
+        end
       else
         print_backup_help
       end
@@ -27,7 +34,6 @@ module Ridoku
 
     def load_environment
       Base.fetch_stack
-      self.services = (Base.custom_json['services'] ||= {})
     end
 
     def print_backup_help
@@ -35,24 +41,16 @@ module Ridoku
 Command: backup
 
 List/Modify the current app's associated workers.
-   backup[:help]  this page
-   backup
+   backup[:help]          this page
+   backup:stack[:store]           backup the stack's Custom JSON to a file
+   backup:stack:restore   restore the stack's Custom JSON from a file
 EOF
     end
 
-    def list
-      if services.length == 0
-        $stdout.puts 'No services specified!'
-      else
-        $stdout.puts "Services for #{$stdout.colorize(Base.config[:stack], [:bold, :green])}:"
-        services.each do |service|
-          if service['layers'].is_a?(Array)
-            $stdout.puts "  [#{$stdout.colorize(service['layers'].join(','), :bold)}] #{service['name']}"
-          else
-            $stdout.puts "  [#{$stdout.colorize('No Layers Specified', [:bold, :red])}] #{service['name']}"
-          end
-        end
-      end
+    def backup_stack(args)
+      IO.write(args.shift, JSON.generate(Base.custom_json))
+    rescue => e
+      $stderr.puts "#{e.class}: #{e.to_s}"
     end
   end
 end

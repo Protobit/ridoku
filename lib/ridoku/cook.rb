@@ -6,6 +6,8 @@ require 'rugged'
 require 'ridoku/base'
 
 module Ridoku
+  register :cook
+
   class Cook < Base
 
     def run      

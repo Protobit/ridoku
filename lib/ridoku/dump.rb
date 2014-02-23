@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :dump
+
   class Dump < Base
 
     def run
@@ -15,6 +17,8 @@ module Ridoku
       case sub_command
       when 'stack'
         dump_stack(sub_sub_command == 'all')
+      when 'custom'
+        dump_custom(sub_sub_command == 'all')
       when 'app'
         dump_app(sub_sub_command == 'all')
       when 'layer'
@@ -35,10 +39,23 @@ module Ridoku
   List/Modify the current app's database configuration.
     dump                 displays this list
     dump:stack[:all]     dump stack json or :all stack jsons
+    dump:custom[:all]    dump stack's custom json only
     dump:app[:all]       dump app json or :all app jsons for specified stack
     dump:layer[:all]     dump layer json or :all layer jsons for specified stack
     dump:instance        dump instance json
     EOF
+    end
+
+    def dump_custom(all = false)
+      Base.fetch_stack
+
+      if all
+        $stdout.print '['
+        Base.stack_list.each { |st| custom(st, true) }
+        $stdout.puts ']'
+      else
+        custom(Base.stack)
+      end
     end
 
     def dump_stack(all = false)
@@ -86,6 +103,12 @@ module Ridoku
 
     def stack(st, multiple = false)
       $stdout.print st.to_json
+      $stdout.print ',' if multiple
+      $stdout.puts
+    end
+
+    def custom(st, multiple = false)
+      $stdout.print st[:custom_json].to_json
       $stdout.print ',' if multiple
       $stdout.puts
     end

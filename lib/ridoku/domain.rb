@@ -5,6 +5,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :domain
+
   class Domain < Base
     attr_accessor :domains
 

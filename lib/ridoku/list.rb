@@ -7,6 +7,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :list
+
   class List < Base    
     def run
       command = Base.config[:command]

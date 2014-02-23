@@ -9,6 +9,8 @@
 require 'ridoku/base'
 
 module Ridoku
+  register :packages
+
   class Packages < Base
 
     def run
@@ -31,12 +33,14 @@ module Ridoku
 
     def print_package_help
       $stderr.puts <<-EOF
-  Command: packages
+Command: packages
 
-  List/Modify the current layer's package dependencies.
-     packages        lists the key value pairs
-     packages:set    PACKAGE [...]
-     packages:delete PACKAGE [...]
+List/Modify the current layer's package dependencies.
+   packages        lists the key value pairs
+   packages:set    PACKAGE [...]
+   packages:delete PACKAGE [...]
+
+#{$stderr.colorize('Warning:', [:bold, :red])} Currently, this is limited by Opsworks to 10 packages.
       EOF
     end
 
