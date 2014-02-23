@@ -17,8 +17,6 @@ module Ridoku
       sub_command = (command.length > 0 && command[1]) || nil
       sub_sub_command = (command.length > 1 && command[2]) || nil
 
-      load_database
-
       case sub_command
       when 'list', nil, 'info'
         list(false)
@@ -86,6 +84,7 @@ module Ridoku
     end
 
     def list(cred)
+      load_database
       if dbase.keys.length == 0
         $stdout.puts 'Database Not Configured!'
       else
@@ -98,6 +97,7 @@ module Ridoku
     end
 
     def set
+      load_database
       ARGV.each do |kvpair|
         kvpair.match(%r((^[^:]+):(.*))) do |m|
           key = m[1]
@@ -113,6 +113,7 @@ module Ridoku
     end
 
     def delete
+      load_database
       ARGV.each do |key|
         value = dbase.delete(key)
         $stdout.puts "Deleting key: #{key}, '#{value}'"
@@ -166,6 +167,7 @@ module Ridoku
     end
 
     def url(subc)
+      load_database
       if subc
         set_url_database(subc)
         Base.save_stack

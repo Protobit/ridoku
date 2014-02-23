@@ -32,6 +32,9 @@ module Ridoku
       when 'config'
         config
 
+      when 'services'
+        services
+
       else
         print_list_help
       end
@@ -154,6 +157,10 @@ module Ridoku
         end
         $stdout.puts
       end
+    end
+
+    def services
+      Ridoku::Service.new.run(['list'])
     end
   end
 end

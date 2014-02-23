@@ -6,6 +6,8 @@ ruby '2.0.0'
 # OpsWorks control SDK + some IAM stuff.
 gem 'aws-sdk'
 
+gem 'require_all'
+
 # JSON.load for the config file and for processing OpsWorks output.
 gem 'json'
 

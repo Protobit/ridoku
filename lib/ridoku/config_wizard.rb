@@ -76,11 +76,12 @@ module Ridoku
       $stdout.puts 'Configuration complete.'
       exit 0
     end
-
     protected
-    
-    def help_text
-      help = <<-EOF
+
+    class << self
+
+      def help_text
+        help = <<-EOF
 Configuration Wizard:
 
 In order to get ridoku configured with your OpsWorks account, Ridoku must 
@@ -104,9 +105,7 @@ Values to be configured:
     generate one for you.  If you've already used OpsWorks, Ridoku should be
     able to find the necessary Roles for you.
         EOF
-    end
-
-    class << self
+      end
 
       def fetch_input(output, required = {}, info = {})
         info ||= {}

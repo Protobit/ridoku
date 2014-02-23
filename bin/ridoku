@@ -7,22 +7,8 @@ require 'getoptlong'
 
 require 'io-colorize'
 
-require 'ridoku/cook'
-require 'ridoku/db'
-require 'ridoku/deploy'
-require 'ridoku/domain'
-require 'ridoku/workers'
-require 'ridoku/env'
-require 'ridoku/list'
-require 'ridoku/packages'
-require 'ridoku/run'
-require 'ridoku/dump'
-require 'ridoku/create'
-require 'ridoku/version'
-
-require 'ridoku/rails_defaults'
-require 'ridoku/config_wizard'
-
+require 'require_all'
+require_rel '../lib/ridoku'
 
 RUNCOM = "#{ENV['HOME']}/.ridokurc"
 
@@ -330,5 +316,6 @@ rescue Ridoku::NoSshAccess
   print_help
   exit 1
 rescue ArgumentError => e
+  raise e if Ridoku::Base.config[:debug]
   $stderr.puts e.to_s
 end
