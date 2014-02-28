@@ -18,15 +18,15 @@ module Ridoku
       command = cline.shift
       sub = cline.shift
 
-      case command
+      # case command
       # when 'list', nil, 'info'
       # when 'init'
       # when 'capture'
       # when 'delete', 'remove', 'rm'
-      else
+      # else
         $stderr.puts 'TODO: Implement backup capabilities (to S3).'
         print_backup_help
-      end
+      # end
     end
 
     protected
