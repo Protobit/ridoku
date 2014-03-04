@@ -11,12 +11,15 @@ module Ridoku
     attr_accessor :app
 
     def run
-      command = Base.config[:command]
-      sub_command = (command.length > 0 && command[1]) || nil
+      clist = Base.config[:command]
+      command = clist.shift
+      sub_command = clist.shift
 
       case sub_command
       when 'to', nil
         deploy
+      when 'rollback'
+        rollback(clist)
       when 'info'
         info
       else
@@ -26,8 +29,22 @@ module Ridoku
 
     protected
 
+    def rollback(args)
+      $stderr.puts <<-EOF
+TODO: Rollback not yet implemented in Ridoku
+
+You can run the recipe 'deploy::rails-rollback' on all instances to complete
+the action manually. (And 'deploy::delayed_job-rollback' if you have workers.)
+
+This should work:
+$ ridoku cook:run deploy::rails-rollback deploy::delayed_job-rollback
+  --app YourApp
+
+EOF
+    end
+
     def deploy
-      Base.fetch_instance('rails-app')
+      Base.fetch_instance
       Base.fetch_app
 
       Base.instances.select! { |inst| inst[:status] == 'online' }
@@ -81,10 +98,16 @@ module Ridoku
   Command: deploy
 
   Deploy the specified application:
-    deploy         deploy the given application to stack instances
-      --instances: used to specify which instances in the stack to deploy to
-                   if not specified, all active stack instances are used
-      --practice   print what would be done, but don't actually do it
+    deploy      deploy the given application to stack instances
+      --instances/-i <instances,...>:
+        used to specify which instances in the stack to deploy to if not
+        specified, all online stack instances are deployed
+      --practice/-p:
+        print what would be done, but don't actually do it
+    rollback    rollback the most recently deployed application.
+        NOTE: This will not rollback environment, database, or domain changes.
+              It will only rollback source code changes.  Configurations will
+              remain the same.
 
   examples:
     $ deploy

@@ -23,12 +23,22 @@ module Ridoku
         add
       when 'delete', 'remove', 'rm'
         delete
+      when 'push'
+        push_update
       else
         print_domain_help
       end
     end
 
     protected
+
+    def push_update
+      $stderr.puts <<-EOF
+TODO: Currently, domain:push does not operate.  To push your domain run:
+
+$ ridoku cook:run deploy::domains --app YourApp
+EOF
+    end
 
     def load_environment
       Base.fetch_app
@@ -37,21 +47,21 @@ module Ridoku
 
     def print_domain_help
       $stderr.puts <<-EOF
-    Command: domain
+Command: domain
 
-    List/Modify the current app's associated domains.
-       domain[:list]   lists the key value pairs
-       domain:add      domain, e.g., http://app.example.com
-       domain:delete   domain or index
+List/Modify the current app's associated domains.
+   domain[:list]   lists the key value pairs
+   domain:add      domain, e.g., http://app.example.com
+   domain:delete   domain or index
 
-    examples:
-      $ domain
-      No domains specified!
-      $ domain:add app.example.com
-      $ domain:list
-      Domains:
-       0: app.example.com
-      EOF
+examples:
+  $ domain
+  No domains specified!
+  $ domain:add app.example.com
+  $ domain:list
+  Domains:
+   0: app.example.com
+  EOF
     end
 
     def list
