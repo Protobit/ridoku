@@ -23,6 +23,16 @@ module Ridoku
        Use the specified App as the default Application.
     EOF
       ],
+      [ '--set-backup-bucket', '-B', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
+<bucket name>
+       Use the specified bucket name as the default Backup Bucket.
+    EOF
+      ],
+      [ '--backup-bucket', '-b', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
+<bucket name>
+       Use the specified bucket name as the current Backup Bucket.
+    EOF
+      ],
       [ '--set-stack', '-S', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
 <stack>
        Use the specified Stack as the default Stack.

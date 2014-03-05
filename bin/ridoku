@@ -148,6 +148,11 @@ begin
       Ridoku::Base.save_config(RUNCOM)
 
       puts "Default shell user set to: #{arg}"
+    when '--set-backup-bucket'
+      Ridoku::Base.config[:backup_bucket] = arg
+      Ridoku::Base.save_config(RUNCOM)
+
+      puts "Default S3 backup bucket set to: #{arg}"
     when '--set-ssh-key'
       Ridoku::Base.config[:ssh_key] = arg
 
@@ -167,6 +172,9 @@ begin
 
     when '--repo'
       Ridoku::Base.config[:repo] = arg
+
+    when '--backup-bucket'
+      Ridoku::Base.config[:backup_bucket] = arg
 
     when '--domains'
       Ridoku::Base.config[:domains] = arg.split(%r(\||;|:|,))

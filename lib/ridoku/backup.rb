@@ -18,15 +18,20 @@ module Ridoku
       command = cline.shift
       sub = cline.shift
 
-      # case command
-      # when 'list', nil, 'info'
-      # when 'init'
-      # when 'capture'
-      # when 'delete', 'remove', 'rm'
-      # else
-        $stderr.puts 'TODO: Implement backup capabilities (to S3).'
+      case command
+      when 'list', nil, 'info'
+        list
+      when 'init'
+        init
+      when 'capture'
+        capture
+      when 'restore'
+        restore
+      when 'delete', 'remove', 'rm'
+        remove
+      else
         print_backup_help
-      # end
+      end
     end
 
     protected
@@ -43,14 +48,43 @@ module Ridoku
 Command: backup
 
 List/Modify the current app's database backups.
-   backup[:list]   lists the stored database backups.
-   backup:init     initialize backup capability (check S3 permissions, and
-                   generate required S3 buckets).
-   db:delete       remove specified backup by name.
-   db:capture      capture a backup form the specified application database.
-   db:url          get a download URL for the specified database backup.
+   backup[:list]      lists the stored database backups.
+   backup:init        initialize backup capability (check S3 permissions, and
+                      generate required S3 buckets).
+   backup:rm <name>   remove specified backup by name.
+   backup:capture     capture a backup form the specified application database.
+   backup:url <name>  get a download URL for the specified database backup.
 
 EOF
+    end
+
+    def list
+      puts 'TODO: List S3 Backup Bucket contents...'
+    end
+
+    def init
+      puts 'TODO: Configure S3 bucket...'
+    end
+
+    def capture
+      recipe_data = {
+        backup: {
+          databases: Base.config[:app].downcase.split(','),
+          dump: {
+            type: 's3',
+            region: 'us-west-1',
+            bucket: Base.config[:backup_bucket] || 'database-backups'
+          }
+        }
+      }
+    end
+
+    def restore
+      puts 'TODO: kick off restore recipe'
+    end
+
+    def remove
+      puts 'TODO: remove specified s3 file.'
     end
   end
 end
