@@ -6,6 +6,7 @@ require 'json'
 require 'getoptlong'
 
 require 'io-colorize'
+require 'helpers'
 
 require 'ridoku'
 require 'options'
@@ -138,21 +139,25 @@ begin
       Ridoku::Base.save_config(RUNCOM)
 
       puts "Default app set to: #{arg}"
+      exit 0 unless ARGV.length > 0
     when '--set-stack'
       Ridoku::Base.config[:stack] = arg
       Ridoku::Base.save_config(RUNCOM)
 
       puts "Default stack set to: #{arg}"
+      exit 0 unless ARGV.length > 0
     when '--set-user'
       Ridoku::Base.config[:shell_user] = arg
       Ridoku::Base.save_config(RUNCOM)
 
       puts "Default shell user set to: #{arg}"
+      exit 0 unless ARGV.length > 0
     when '--set-backup-bucket'
       Ridoku::Base.config[:backup_bucket] = arg
       Ridoku::Base.save_config(RUNCOM)
 
       puts "Default S3 backup bucket set to: #{arg}"
+      exit 0 unless ARGV.length > 0
     when '--set-ssh-key'
       Ridoku::Base.config[:ssh_key] = arg
 

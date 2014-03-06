@@ -4,6 +4,7 @@
 require 'aws'
 require 'active_support/inflector'
 require 'securerandom'
+require 'restclient'
 
 module Ridoku
   class InvalidConfig < StandardError
@@ -38,7 +39,7 @@ module Ridoku
       end
 
       def save_config(path, limit = [:app, :stack, :ssh_key, :local_init,
-        :shell_user, :service_arn, :instance_arn])
+        :shell_user, :service_arn, :instance_arn, :backup_bucket])
         save = {}
         if limit.length
           limit.each do |lc|
@@ -379,7 +380,7 @@ module Ridoku
         end.first
 
         db_layer = layer_list.select do |lyr|
-          lyr[:shortname] == 'ridoku-postgresql'
+          lyr[:shortname] == 'postgresql'
         end.first
 
         deploy_info = custom_json['deploy']
@@ -480,7 +481,7 @@ module Ridoku
         inststr
       end
 
-      def deploy(deployment)
+      def run_command(deployment)
         fetch_stack
         fetch_app
 
@@ -490,7 +491,8 @@ module Ridoku
           $stdout.puts "Would run command: #{deployment[:command][:name]}"
           $stdout.puts 'On instances:'
           instances.each do |inst|
-            next unless deployment[:instance_ids].index(inst[:instance_id]) != nil
+            next unless
+              deployment[:instance_ids].index(inst[:instance_id]) != nil
 
             $stdout.puts "  #{inst[:hostname]}: #{$stdout.colorize(
               inst[:status], inst[:status] == 'online' ? :green : :red)}"
@@ -505,6 +507,46 @@ module Ridoku
         end
       end
 
+      def base_command(app_id, instance_ids, comment)
+        fail ArgumentError.new('[ERROR] No instances selected.') if
+          !instance_ids.is_a?(Array) || instance_ids.empty?
+
+        {}.tap do |cmd|
+          cmd[:instance_ids] = instance_ids
+          cmd[:app_id] = app_id if app_id
+          cmd[:comment] = comment if comment
+        end
+      end
+
+      def update_cookbooks
+        command = Base.base_command(nil, extract_instance_ids,
+          Base.config[:comment])
+        command[:command] = { name: 'update_custom_cookbooks' }
+        command
+      end
+
+      def execute_recipes(app_id, instance_ids, comment, recipes)
+        base_command(app_id, instance_ids, comment).tap do |cmd|
+          cmd[:command] = {
+            name: 'execute_recipes',
+            args: { 'recipes' => [recipes].flatten }
+          }
+        end
+      end
+
+      def deploy(app_id, instance_ids, comment, custom_json = nil)
+        base_command(app_id, instance_ids, comment).tap do |cmd|
+          cmd[:command] = {
+            name: 'deploy'
+          }
+          cmd[:custom_json] = custom_json if custom_json
+        end
+      end
+
+      def color_code_logs(logs)
+        $stderr.puts(logs.gsub(%r((?<color>\[[0-9]{1,2}m)),"\e\\k<color>"))
+      end
+
       def monitor_deployment(dep_ids)
         cmds = aws_client.describe_commands(deployment_id: dep_ids)
 
@@ -514,7 +556,8 @@ module Ridoku
 
         $stdout.puts "Command issued to #{commands.length} instances:"
         commands.each do |cmd|
-          $stdout.puts "  #{$stdout.colorize(cmd[:instance][:hostname], :green)}"
+          $stdout.puts "  #{$stdout.colorize(cmd[:instance][:hostname], 
+            :green)}"
         end
 
         # Iterate a reasonable number of times... 100*5 => 500 seconds
@@ -558,6 +601,7 @@ module Ridoku
             $stderr.puts " Status: " +
               $stderr.colorize(item[:command][:status], :red)
             $stderr.puts " Url: " + item[:command][:log_url]
+            color_code_logs(RestClient.get(item[:command][:log_url]))
             exit 1
           end
 
@@ -566,4 +610,12 @@ module Ridoku
       end
     end
   end
-end  
+end
+
+BYTE_UNITS2 =[[1073741824, "GB"], [1048576, "MB"], [1024, "KB"], [0,
+"B"]]
+
+def nice_bytes(n)
+  unit = BYTE_UNITS2.detect{ |u| n > u[0] }
+  "#{n/unit[0]} #{unit[1]}"
+end

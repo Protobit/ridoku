@@ -3,6 +3,7 @@
 #
 
 require 'ridoku/base'
+require 'json'
 
 module Ridoku
   register :domain
@@ -32,14 +33,6 @@ module Ridoku
 
     protected
 
-    def push_update
-      $stderr.puts <<-EOF
-TODO: Currently, domain:push does not operate.  To push your domain run:
-
-$ ridoku cook:run deploy::domains --app YourApp
-EOF
-    end
-
     def load_environment
       Base.fetch_app
       self.domains = (Base.app[:domains] ||= [])
@@ -53,6 +46,7 @@ List/Modify the current app's associated domains.
    domain[:list]   lists the key value pairs
    domain:add      domain, e.g., http://app.example.com
    domain:delete   domain or index
+   domain:push     push updated domains to the server
 
 examples:
   $ domain
@@ -97,6 +91,42 @@ examples:
       end
       
       Base.save_app(:domains)
+    end
+
+    def push_update
+      if domains.length == 0
+        $stdout.puts 'No domains specified!'
+        $stderr.puts 'Please specify at least 1 domain and try again.'
+        return
+      end
+
+      Base.fetch_instance('rails-app')
+      Base.fetch_app
+
+      Base.instances.select! { |inst| inst[:status] == 'online' }
+      instance_ids = Base.instances.map { |inst| inst[:instance_id] }
+
+      $stdout.puts "Application:"
+      $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
+      $stdout.puts "Pushing domains:"
+
+      domains.each_index do |idx|
+        $stdout.puts "  #{$stdout.colorize(idx.to_s, :bold)}: #{domains[idx]}"
+      end
+
+      $stdout.puts "To #{Base.instances.length} instance(s):"
+
+      Base.pretty_instances($stdout).each do |inst|
+        $stdout.puts "  #{inst}"
+      end
+
+      $stdout.puts "Repository:"
+      $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)}"\
+        " @ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
+
+      command = Base.deploy(Base.app[:app_id], instance_ids,
+        Base.config[:comment])
+      Base.run_command(command)
     end
   end
 end

@@ -52,20 +52,9 @@ module Ridoku
     end
 
     def update
-      deployment = {
-        instance_ids: extract_instance_ids,
-        command: {
-          name: 'update_custom_cookbooks'
-        }
-      }
-
-      deployment.tap do |dep|
-        dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
-      end
-
       $stdout.puts "Updating custom cookbooks..."
 
-      Base.deploy(deployment)
+      Base.run_command(Base.update_cookbooks)
     end
 
     def valid_recipe_format?
@@ -98,19 +87,10 @@ module Ridoku
         $stdout.puts "  #{$stdout.colorize(arg, :green)}"
       end
 
-      deployment = {
-        instance_ids: instance_ids,
-        command: {
-          name: 'execute_recipes',
-          args: { 'recipes' => ARGV }
-        }
-      }
+      command = Base.execute_recipes(Base.app[:app_id], instances, ARGV,
+        Base.config[:comment])
 
-      deployment.tap do |dep|
-        dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
-      end
-
-      Base.deploy(deployment)
+      Base.run_command(command)
     end
 
     def print_cook_help

@@ -6,6 +6,9 @@ ruby '2.0.0'
 # OpsWorks control SDK + some IAM stuff.
 gem 'aws-sdk'
 
+# For fetching logs from S3.
+gem 'rest-client'
+
 gem 'require_all'
 
 # JSON.load for the config file and for processing OpsWorks output.

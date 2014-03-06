@@ -67,19 +67,10 @@ EOF
       $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
-      deployment = {
-        app_id: Base.app[:app_id],
-        instance_ids: instance_ids,
-        command: {
-          name: 'deploy'
-        }
-      }
+      command = Base.deploy(Base.app[:app_id], instance_ids,
+        Base.config[:comment])
 
-      deployment.tap do |dep|
-        dep[:comment] = Base.config[:comment] if Base.config.key?(:comment)
-      end
-
-      Base.deploy(deployment)
+      Base.run_command(command)
     end
 
     def info
