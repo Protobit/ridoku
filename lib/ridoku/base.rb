@@ -35,7 +35,9 @@ module Ridoku
           end
         end
 
-        self.config ||= {}
+        (self.config ||= {}).tap do |default|
+          default[:wait] = true
+        end
       end
 
       def save_config(path, limit = [:app, :stack, :ssh_key, :local_init,
@@ -145,6 +147,13 @@ module Ridoku
         end
       end
 
+      def get_layer_ids(shortname)
+        fetch_stack
+        layers = aws_client.describe_layers(stack_id: stack[:stack_id])[:layers]
+        layers.select { |l| l[:shortname] == shortname }
+          .map { |l| l[:layer_id] }
+      end
+
       def save_layer(layer, values)
         values = [values] unless values.is_a?(Array)
 
@@ -192,6 +201,19 @@ module Ridoku
 
           self.instances.flatten!
         end
+      end
+
+      def get_instances_for_layer(layer)
+        layer_ids = get_layer_ids(layer)
+        instances = aws_client
+          .describe_instances(stack_id: stack[:stack_id])[:instances]
+        ret = []
+        layer_ids.each do |id|
+          instances.each do |inst|
+            ret << inst if inst[:layer_ids].include?(id)
+          end
+        end
+        ret
       end
 
       def configure_iam_client
@@ -496,14 +518,24 @@ module Ridoku
 
             $stdout.puts "  #{inst[:hostname]}: #{$stdout.colorize(
               inst[:status], inst[:status] == 'online' ? :green : :red)}"
+
+          end
+
+          if deployment.key?(:custom_json)
+            $stdout.puts 'With custom_json:'
+            $stdout.puts JSON.pretty_generate(deployment[:custom_json])
           end
         else
+          if deployment.key?(:custom_json)
+            deployment[:custom_json] = JSON.generate(deployment[:custom_json])
+          end
+
           depid = aws_client.create_deployment(deployment)[:deployment_id]
 
           $stdout.puts $stdout.colorize('Command Sent', :green) if
             config[:verbose]
 
-          monitor_deployment(depid)
+          monitor_deployment(depid) if config[:wait]
         end
       end
 
@@ -518,19 +550,20 @@ module Ridoku
         end
       end
 
-      def update_cookbooks
-        command = Base.base_command(nil, extract_instance_ids,
+      def update_cookbooks(instance_ids)
+        command = Base.base_command(nil, instance_ids,
           Base.config[:comment])
         command[:command] = { name: 'update_custom_cookbooks' }
         command
       end
 
-      def execute_recipes(app_id, instance_ids, comment, recipes)
+      def execute_recipes(app_id, instance_ids, comment, recipes, custom_json)
         base_command(app_id, instance_ids, comment).tap do |cmd|
           cmd[:command] = {
             name: 'execute_recipes',
             args: { 'recipes' => [recipes].flatten }
           }
+          cmd[:custom_json] = custom_json if custom_json
         end
       end
 
@@ -561,7 +594,7 @@ module Ridoku
         end
 
         # Iterate a reasonable number of times... 100*5 => 500 seconds
-        300.times do |time|
+        20.times do |time|
           cmds = aws_client.describe_commands(deployment_id: dep_ids)
 
           success = cmds[:commands].select do |cmd|

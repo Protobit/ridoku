@@ -58,29 +58,58 @@ List/Modify the current app's database backups.
 EOF
     end
 
-    def list
-      bucket_exists!
-
+    def objects_from_bucket(bucket)
       s3 = AWS::S3.new
 
-      bucket = s3.buckets[Base.config[:backup_bucket]]
+      bucket = s3.buckets[bucket]
 
       # hack: couldn't find how to get an object count...
       objects = 0
 
-      bucket.objects.each do |obj|
-        $stdout.puts "#{$stdout.colorize(obj.key, :bold)}, "\
-          "#{nice_bytes(obj.content_length)} bytes, "\
-          "#{obj.content_type.length > 0 ?
-              obj.content_type :
-              '(content-type unspecified)'}"
-        objects += 1
+      bucket.objects.map do |obj|
+        { key: obj.key, size: obj.content_length, type: obj.content_type }
+      end
+    end
+
+    def object_list_to_hash(list)
+      final = {}
+      max = 0
+
+      list.each do |obj|
+        comp = obj[:key].match(
+          %r(^(.*)-([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2})([0-9]{2}).sqd$)
+        )
+
+        max = obj[:key].length if obj[:key].length > max
+
+        unless comp.nil?
+          app = comp[1]
+          final[app] ||= []
+          obj[:app] = app
+          obj[:date] = "#{comp[3]}/#{comp[4]}/#{comp[2]} #{comp[5]}:#{comp[6]}"
+          final[app] << obj
+        end
       end
 
-      if objects > 0
-        $stdout.puts "#{objects} objects found."
-      else
-        $stdout.puts "There are no objects in the specified backup bucket!"
+      [ final, max ]
+    end
+
+    def pspace(str, max)
+      str + ' ' * (max - str.length)
+    end
+
+    def list
+      bucket_exists!
+
+      list = objects_from_bucket(Base.config[:backup_bucket])
+      app_hash, max = object_list_to_hash(list)
+
+      app_hash.each do |key, value|
+        $stdout.puts "#{$stdout.colorize(key, :green)}:"
+        value.each do |obj|
+          $stdout.puts "  #{pspace(obj[:key], max)}  "\
+            "#{obj[:date]}\t#{obj[:type]}"
+        end
       end
     end
 
@@ -149,12 +178,14 @@ EOF
         }
       }
 
+      Base.fetch_app
       Base.fetch_instance
-      Base.instances.select! { |inst| inst[:status] == 'online' }
-      instance_ids = Base.instances.map { |inst| inst[:instance_id] }
+      instances = Base.get_instances_for_layer('postgresql')
+      instance_ids = instances.map { |inst| inst[:instance_id] }
 
       command = Base.execute_recipes(Base.app[:app_id], instance_ids,
-        'Capturing application DB backup.', ['postgresql::backup_database'])
+        'Capturing application DB backup.', ['s3',
+          'postgresql::backup_database'], recipe_data)
 
       Base.run_command(command)
     end
@@ -162,7 +193,43 @@ EOF
     def restore(sub)
       bucket_exists!
       object_exists!(sub, 'restore')
-      puts 'TODO: kick off restore recipe'
+      $stdout.puts 'Are you sure you want to restore this database dump? [yes/N]'
+      res = $stdin.gets.chomp
+
+      if res.present? && res == 'yes'
+        recipe_data = {
+          backup: {
+            databases: Base.config[:app].downcase.split(','),
+            dump: {
+              type: 's3',
+              region: 'us-west-1',
+              bucket: Base.config[:backup_bucket],
+              key: sub
+            }
+          }
+        }
+
+        Base.fetch_app
+        Base.fetch_instance
+        layer_ids = Base.get_layer_id('postgresql')
+
+        Base.instances.select! do |inst|
+          next false unless inst[:status] == 'online'
+          next layer_ids.each do |id|
+            break true if inst[:layer_ids].include?(id)
+          end || false
+        end
+
+        instance_ids = Base.instances.map { |inst| inst[:instance_id] }
+
+        command = Base.execute_recipes(Base.app[:app_id], instance_ids,
+          'Restoring application DB backup.', ['s3',
+            'postgresql::restore_database'], recipe_data)
+
+        Base.run_command(command)
+      else
+        $stdout.puts 'Aborting.'
+      end
     end
 
     def remove(sub)
@@ -224,7 +291,7 @@ EOF
         )
     end
 
-    def fail_object_not_found
+    def fail_object_not_found!
         # Fail if bucket doesn't exist.
       fail ArgumentError.new(<<EOF
 

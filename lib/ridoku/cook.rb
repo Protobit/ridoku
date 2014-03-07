@@ -54,7 +54,7 @@ module Ridoku
     def update
       $stdout.puts "Updating custom cookbooks..."
 
-      Base.run_command(Base.update_cookbooks)
+      Base.run_command(Base.update_cookbooks(extract_instance_ids))
     end
 
     def valid_recipe_format?

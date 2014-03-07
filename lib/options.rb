@@ -8,6 +8,11 @@ module Ridoku
        Turn on debugging outputs (for AWS and Exceptions).
     EOF
       ],
+      [ '--no-wait', '-n', GetoptLong::NO_ARGUMENT,<<-EOF
+
+       When issuing a command, do not wait for the command to return.
+    EOF
+      ],
       [ '--key', '-k', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
 <key>
        Use the specified key as the AWS_ACCESS_KEY   
@@ -93,7 +98,7 @@ module Ridoku
       [ '--repo', '-r', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
     EOF
       ],
-      [ '--service-arn', '-n', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
+      [ '--service-arn', '-V', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
     EOF
       ],
       [ '--instance-arn', '-N', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
