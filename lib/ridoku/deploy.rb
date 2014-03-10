@@ -29,7 +29,7 @@ module Ridoku
 
     protected
 
-    def rollback(args)
+    def rollback
       Base.fetch_instance
       Base.fetch_app
 
@@ -53,8 +53,14 @@ module Ridoku
       $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
-      command = Base.deploy(Base.app[:app_id], instance_ids,
-        Base.config[:comment])
+      command = Base.rollback(Base.app[:app_id], instance_ids,
+        Base.config[:comment], {
+          "opsworks_custom_cookbooks" => {
+            "recipes" => [
+              "deploy::delayed_job-rollback"
+            ]
+          }
+        })
 
       Base.run_command(command)
     end
@@ -84,11 +90,7 @@ module Ridoku
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
       command = Base.deploy(Base.app[:app_id], instance_ids,
-        Base.config[:comment], {
-            "opsworks": {
-              "deploy"
-            }
-          })
+        Base.config[:comment])
 
       Base.run_command(command)
     end
