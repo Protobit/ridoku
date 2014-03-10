@@ -557,7 +557,8 @@ module Ridoku
         command
       end
 
-      def execute_recipes(app_id, instance_ids, comment, recipes, custom_json)
+      def execute_recipes(app_id, instance_ids, comment, recipes,
+        custom_json = nil)
         base_command(app_id, instance_ids, comment).tap do |cmd|
           cmd[:command] = {
             name: 'execute_recipes',

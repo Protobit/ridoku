@@ -69,6 +69,8 @@ module Ridoku
     end
 
     def cook
+      Base.fetch_app
+
       unless valid_recipe_format?
         $stderr.puts 'Invalid recipes provided.'
         print_cook_help
@@ -87,8 +89,8 @@ module Ridoku
         $stdout.puts "  #{$stdout.colorize(arg, :green)}"
       end
 
-      command = Base.execute_recipes(Base.app[:app_id], instances, ARGV,
-        Base.config[:comment])
+      command = Base.execute_recipes(Base.app[:app_id], instance_ids,
+        Base.config[:comment], ARGV)
 
       Base.run_command(command)
     end
