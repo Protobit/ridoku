@@ -445,7 +445,7 @@ module Ridoku
         save_stack
 
         # Update add our changes to the database.
-        deploy({
+        run_command({
           instance_ids: [db_instance[:instance_id]],
           command: {
             name: 'execute_recipes',

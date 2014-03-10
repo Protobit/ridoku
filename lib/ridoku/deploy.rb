@@ -111,13 +111,13 @@ module Ridoku
   Command: deploy
 
   Deploy the specified application:
-    deploy      deploy the given application to stack instances
+    deploy            deploy the given application to stack instances
       --instances/-i <instances,...>:
         used to specify which instances in the stack to deploy to if not
         specified, all online stack instances are deployed
       --practice/-p:
         print what would be done, but don't actually do it
-    rollback    rollback the most recently deployed application.
+    deploy:rollback   rollback the most recently deployed application.
         NOTE: This will not rollback environment, database, or domain changes.
               It will only rollback source code changes.  Configurations will
               remain the same.
