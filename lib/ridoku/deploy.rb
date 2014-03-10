@@ -19,7 +19,7 @@ module Ridoku
       when 'to', nil
         deploy
       when 'rollback'
-        rollback(clist)
+        rollback
       when 'info'
         info
       else
@@ -30,17 +30,33 @@ module Ridoku
     protected
 
     def rollback(args)
-      $stderr.puts <<-EOF
-TODO: Rollback not yet implemented in Ridoku
+      Base.fetch_instance
+      Base.fetch_app
 
-You can run the recipe 'deploy::rails-rollback' on all instances to complete
-the action manually. (And 'deploy::delayed_job-rollback' if you have workers.)
+      Base.instances.select! { |inst| inst[:status] == 'online' }
+      instance_ids = Base.instances.map { |inst| inst[:instance_id] }
 
-This should work:
-$ ridoku cook:run deploy::rails-rollback deploy::delayed_job-rollback
-  --app YourApp
+      # :app_source => {
+      #   :type => "git",
+      #   :url => "git@github.com:Protobit/Survly.git",
+      #   :ssh_key => "*****FILTERED*****",
+      #   :revision => "opsworks-staging"
+      # }
 
-EOF
+      $stdout.puts "Application:"
+      $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
+      $stdout.puts "Rolling back on #{Base.instances.length} instance(s):"
+      Base.pretty_instances($stdout).each do |inst|
+        $stdout.puts "  #{inst}"
+      end
+      $stdout.puts "Repository:"
+      $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
+        "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
+
+      command = Base.deploy(Base.app[:app_id], instance_ids,
+        Base.config[:comment])
+
+      Base.run_command(command)
     end
 
     def deploy
@@ -68,7 +84,11 @@ EOF
         "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
       command = Base.deploy(Base.app[:app_id], instance_ids,
-        Base.config[:comment])
+        Base.config[:comment], {
+            "opsworks": {
+              "deploy"
+            }
+          })
 
       Base.run_command(command)
     end

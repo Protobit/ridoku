@@ -576,6 +576,13 @@ module Ridoku
         end
       end
 
+      def rollback(app_id, instance_ids, comment, custom_json = nil)
+        dep = deploy(app_id, instance_ids, comment, custom_json)
+        dep[:command] = { name: 'rollback' }
+
+        dep
+      end
+
       def color_code_logs(logs)
         $stderr.puts(logs.gsub(%r((?<color>\[[0-9]{1,2}m)),"\e\\k<color>"))
       end
