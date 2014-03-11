@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
   spec.license       = "BSD 3-clause"
 
   spec.files         = `git ls-files`.split($/)
-  spec.executables   = ['ridoku']
+  spec.executables   = ['ridoku', 'rid']
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
