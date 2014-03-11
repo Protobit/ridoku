@@ -240,11 +240,11 @@ account.  To
 
 To set the specific stack to use:
 
-`$ ridoku --set-stack &lt;stackname&gt;`
+`$ ridoku --set-stack <stackname>`
 
 To set a single run stack or override the default:
 
-`$ ridoku --stack &lt;stackname&gt; --app &lt;appname&gt; command…`
+`$ ridoku --stack <stackname> --app <appname> command…`
 
 ### Apps:
   The actual application which runs on the technology stack.
@@ -255,11 +255,11 @@ basis.  The same goes for OpsWorks.
 
 To set the default app to use:
 
-`$ ridoku --set-app &lt;stackname&gt;`
+`$ ridoku --set-app <stackname>`
 
 To set a specific run app or override the default:
 
-`$ ridoku --stack &lt;stackname&gt; --app &lt;appname&gt; command…`
+`$ ridoku --stack <stackname> --app <appname> command…`
 
 ## Future
 
