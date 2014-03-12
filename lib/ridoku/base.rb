@@ -538,6 +538,23 @@ module Ridoku
           monitor_deployment(depid) if config[:wait]
         end
       end
+      
+      def extract_instance_ids
+        Base.fetch_instance(Base.config[:layers] || :all)
+
+        names = Base.config[:instances] || []
+        instances = Base.instances.select do |inst|
+          if names.length > 0
+            names.index(inst[:hostname]) != nil && inst[:status] != 'offline'
+          else
+            inst[:status] == 'online'
+          end
+        end
+
+        instances.map do |inst|
+          inst[:instance_id]
+        end
+      end
 
       def base_command(app_id, instance_ids, comment)
         fail ArgumentError.new('[ERROR] No instances selected.') if
@@ -582,6 +599,32 @@ module Ridoku
         dep[:command] = { name: 'rollback' }
 
         dep
+      end
+
+      def standard_deploy(layer = :all, custom_json = nil)
+        fetch_instance(layer)
+        fetch_app
+
+        instances.select! { |inst| inst[:status] == 'online' }
+        instance_ids = instances.map { |inst| inst[:instance_id] }
+
+        unless config[:quiet]
+          $stdout.puts "Application:"
+          $stdout.puts "  #{$stdout.colorize(app[:name], :bold)}"
+
+          $stdout.puts "#{instances.length} instance(s):"
+
+          pretty_instances($stdout).each do |inst|
+            $stdout.puts "  #{inst}"
+          end
+
+          $stdout.puts "Repository:"
+          $stdout.puts "  #{$stdout.colorize(app[:app_source][:url], :bold)}"\
+            " @ #{$stdout.colorize(app[:app_source][:revision], :bold)}"
+        end
+
+        run_command(deploy(app[:app_id], instance_ids, config[:comment],
+          custom_json))
       end
 
       def color_code_logs(logs)

@@ -100,33 +100,24 @@ examples:
         return
       end
 
-      Base.fetch_instance('rails-app')
-      Base.fetch_app
+      unless Base.config[:quiet]
+        $stdout.puts "Pushing domains:"
 
-      Base.instances.select! { |inst| inst[:status] == 'online' }
-      instance_ids = Base.instances.map { |inst| inst[:instance_id] }
-
-      $stdout.puts "Application:"
-      $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
-      $stdout.puts "Pushing domains:"
-
-      domains.each_index do |idx|
-        $stdout.puts "  #{$stdout.colorize(idx.to_s, :bold)}: #{domains[idx]}"
+        domains.each_index do |idx|
+          $stdout.puts "  #{$stdout.colorize(idx.to_s, :bold)}: #{domains[idx]}"
+        end
       end
 
-      $stdout.puts "To #{Base.instances.length} instance(s):"
-
-      Base.pretty_instances($stdout).each do |inst|
-        $stdout.puts "  #{inst}"
-      end
-
-      $stdout.puts "Repository:"
-      $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)}"\
-        " @ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
-
-      command = Base.deploy(Base.app[:app_id], instance_ids,
-        Base.config[:comment])
-      Base.run_command(command)
+      Base.standard_deploy('rails-app', 
+        {
+          opsworks_custom_cookbooks: {
+            recipes: [
+              "deploy::domains"
+            ]
+          }
+        }
+      )
+      
     end
   end
 end

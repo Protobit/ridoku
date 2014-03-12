@@ -30,23 +30,6 @@ module Ridoku
 
     protected
 
-    def extract_instance_ids
-      Base.fetch_instance(Base.config[:layers] || :all)
-
-      names = Base.config[:instances] || []
-      instances = Base.instances.select do |inst|
-        if names.length > 0
-          names.index(inst[:hostname]) != nil && inst[:status] != 'offline'
-        else
-          inst[:status] == 'online'
-        end
-      end
-
-      instances.map do |inst|
-        inst[:instance_id]
-      end
-    end
-
     def list
       update unless File.exists?(cookbook_path)
     end
@@ -54,45 +37,53 @@ module Ridoku
     def update
       $stdout.puts "Updating custom cookbooks..."
 
-      Base.run_command(Base.update_cookbooks(extract_instance_ids))
+      Base.run_command(Base.update_cookbooks(Base.extract_instance_ids))
     end
 
-    def valid_recipe_format?
-      return false if ARGV.length == 0
+    class << self
+      def valid_recipe_format?(recipes)
+        return false if recipes.length == 0
 
-      recipe = %r(^[a-zA-Z0-9_\-]+(::[a-zA-Z0-9_\-]+){0,1}$)
-      ARGV.each do |cr|
-        return false unless cr.match(recipe)
+        recipe = %r(^[a-zA-Z0-9_\-]+(::[a-zA-Z0-9_\-]+){0,1}$)
+        recipes.each do |cr|
+          return false unless cr.match(recipe)
+        end
+
+        true
       end
 
-      true
+      def cook_recipe(recipes) 
+        Base.fetch_app
+
+        recipes = [recipes] unless recipes.is_a?(Array)
+
+        unless valid_recipe_format?(recipes)
+          $stderr.puts 'Invalid recipes provided.'
+          print_cook_help
+          exit 1
+        end
+
+        instance_ids = Base.extract_instance_ids
+
+        if instance_ids.length == 0
+          $stderr.puts 'No valid instances available.'
+          exit 1
+        end
+
+        $stdout.puts "Running recipes:"
+        recipes.each do |arg|
+          $stdout.puts "  #{$stdout.colorize(arg, :green)}"
+        end
+
+        command = Base.execute_recipes(Base.app[:app_id], instance_ids,
+          Base.config[:comment], recipes)
+
+        Base.run_command(command)
+      end
     end
 
     def cook
-      Base.fetch_app
-
-      unless valid_recipe_format?
-        $stderr.puts 'Invalid recipes provided.'
-        print_cook_help
-        exit 1
-      end
-
-      instance_ids = extract_instance_ids
-
-      if instance_ids.length == 0
-        $stderr.puts 'No valid instances available.'
-        exit 1
-      end
-
-      $stdout.puts "Running recipes:"
-      ARGV.each do |arg|
-        $stdout.puts "  #{$stdout.colorize(arg, :green)}"
-      end
-
-      command = Base.execute_recipes(Base.app[:app_id], instance_ids,
-        Base.config[:comment], ARGV)
-
-      Base.run_command(command)
+      self.cook_recipe(ARGV)
     end
 
     def print_cook_help

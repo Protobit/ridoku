@@ -25,6 +25,8 @@ module Ridoku
         list
       when 'set', 'add'
         set
+      when 'push'
+        push
       when 'delete', 'remove', 'rm'
         delete
       else
@@ -47,6 +49,7 @@ module Ridoku
 
     List/Modify the current app's environment.
        env        lists the key value pairs
+       env:push   push recipe changes
        env:set    KEY:VALUE [...]
        env:delete KEY [...]
 
@@ -60,6 +63,20 @@ module Ridoku
       Environment:
         AWS_ACCESS_KEY: 'jas8dyfawenfi9f'
       EOF
+    end
+
+    def push
+      $stdout.puts "Pushing current environment..."
+
+      Base.standard_deploy('rails-app', 
+        {
+          opsworks_custom_cookbooks: {
+            recipes: [
+              "deploy::environment"
+            ]
+          }
+        }
+      )
     end
 
     def list

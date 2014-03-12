@@ -112,8 +112,8 @@ module Ridoku
 
   Deploy the specified application:
     deploy            deploy the given application to stack instances
-      --instances/-i <instances,...>:
-        used to specify which instances in the stack to deploy to if not
+      --layers/-l <layers,...>:
+        used to specify which layers in the stack to deploy to if not
         specified, all online stack instances are deployed
       --practice/-p:
         print what would be done, but don't actually do it
