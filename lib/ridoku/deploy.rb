@@ -55,44 +55,38 @@ module Ridoku
 
       command = Base.rollback(Base.app[:app_id], instance_ids,
         Base.config[:comment], {
-          "opsworks_custom_cookbooks" => {
-            "recipes" => [
+          opsworks_custom_cookbooks: {
+            recipes: [
               "deploy::delayed_job-rollback"
             ]
           }
-        })
+        }
+      )
 
       Base.run_command(command)
     end
 
     def deploy
-      Base.fetch_instance
-      Base.fetch_app
-
-      Base.instances.select! { |inst| inst[:status] == 'online' }
-      instance_ids = Base.instances.map { |inst| inst[:instance_id] }
-
-      # :app_source => {
-      #   :type => "git",
-      #   :url => "git@github.com:Protobit/Survly.git",
-      #   :ssh_key => "*****FILTERED*****",
-      #   :revision => "opsworks-staging"
-      # }
-
-      $stdout.puts "Application:"
-      $stdout.puts "  #{$stdout.colorize(Base.app[:name], :bold)}"
-      $stdout.puts "Deploying to #{Base.instances.length} instance(s):"
-      Base.pretty_instances($stdout).each do |inst|
-        $stdout.puts "  #{inst}"
+      custom_json = {}.tap do |json|
+        json[:deploy] = {
+          Base.config[:app] => {
+            action: 'force_deploy'
+          }
+        } if Base.config[:force]
       end
-      $stdout.puts "Repository:"
-      $stdout.puts "  #{$stdout.colorize(Base.app[:app_source][:url], :bold)} " +
-        "@ #{$stdout.colorize(Base.app[:app_source][:revision], :bold)}"
 
-      command = Base.deploy(Base.app[:app_id], instance_ids,
-        Base.config[:comment])
+      if Base.config[:force]
+        begin
+          $stdout.puts 'Hold your seats: force deploying in... (Press CTRL-C to Stop)'
+          5.times { |t| $stdout.print "#{$stdout.colorize(5-t, :red)} "; sleep 1 }
+          $stdout.puts "\nSilence is acceptance..."
+        rescue Interrupt
+          $stdout.puts $stdout.colorize("\nCommand canceled", :green)
+          exit 1
+        end
+      end
 
-      Base.run_command(command)
+      Base.standard_deploy(:all, custom_json)
     end
 
     def info

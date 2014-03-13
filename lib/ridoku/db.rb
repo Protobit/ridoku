@@ -26,6 +26,8 @@ module Ridoku
         list(true)
       when 'set', 'add'
         set
+      when 'push', 'update'
+        push
       when 'delete', 'remove', 'rm'
         delete
       when 'url', 'path'
@@ -83,6 +85,10 @@ module Ridoku
         username: survly
         reconnect: true
       EOF
+    end
+
+    def push_update
+      puts 'TODO: need a deploy::database-update'
     end
 
     def list(cred)

@@ -196,8 +196,18 @@ begin
     when '--wizard'
       Ridoku::Base.config[:wizard] = true
 
+    when '--lines'
+      unless arg.match(/^[0-9+]$/)
+        $stderr.puts '--lines must be a number!'
+        exit 1
+      end
+      Ridoku::Base.config[:wizard] = arg
+
     when '--stack'
       Ridoku::Base.config[:stack] = arg
+
+    when '--force'
+      Ridoku::Base.config[:force] = true
 
     when '--user'
       Ridoku::Base.config[:shell_user] = arg

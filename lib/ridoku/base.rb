@@ -481,7 +481,7 @@ module Ridoku
 
       def select_instances(args)
         fetch_instance
-        return instances_list unless args
+        return instance_list unless args
 
         args = [args] unless args.is_a?(Array)
         return nil if args.length == 0

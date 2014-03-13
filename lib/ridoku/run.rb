@@ -26,61 +26,73 @@ module Ridoku
 
     protected
 
-    def load_environment
-      Base.fetch_stack
-      Base.fetch_app
+    class << self
+      def create_ssh_path
+        Base.fetch_instance
+        Base.fetch_account
 
-      self.environment =
-        Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
-    end
+        instance = Base.select_instances(Base.config[:instances]).first
 
-    def create_ssh_path
-      Base.fetch_instance
-      Base.fetch_account
+        unless instance
+          $stderr.puts 'Unable to find a valid instance.'
+          print_run_help
+          exit 1
+        end
 
-      instance = Base.select_instances(Base.config[:instances]).first
-
-      unless instance
-        $stderr.puts 'Unable to find a valid instance.'
-        print_run_help
-        exit 1
+        username = Base.account[:user][:user_name].gsub(/[.]/, '')
+        "#{username}@#{instance[:elastic_ip] || instance[:public_ip]}"
       end
 
-      username = Base.account[:user][:user_name].gsub!(/[.]/, '')
-      "#{username}@#{instance[:elastic_ip] || instance[:public_ip]}"
-    end
+      def command(command = nil, relative_command = true)
+        Base.fetch_app
+        Base.fetch_permissions
+        
+        Base.fetch_stack
+        
+        # stupid fucking escaping bullshit
+        # So, ruby escapes, so does bash, so does ssh
+        # (all interpreter layers)
+        # Sooo, we have to have an OMFG ridiculous number of backslashes...
+        # to escape one mother fucking value.
 
-    def ssh_command(command = nil)
-      Base.fetch_app
-      Base.fetch_permissions
-      
-      load_environment
+        # TODO: The entire 'run' system is fucked.  Rethink it.
+        command.gsub!(/\$/, '\\'*14 + '$') if command
 
-      fail Ridoku::NoSshAccess.new unless
-        Base.permissions[:permissions].first[:allow_ssh]
-      
-      if Base.permissions[:permissions].first[:allow_sudo]
-        prefix = "sudo su #{Base.config[:shell_user] || 'root'} -c "
-      else
-        prefix = ''
+        environment =
+          Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
+
+        fail Ridoku::NoSshAccess.new unless
+          Base.permissions[:permissions].first[:allow_ssh]
+        
+        if Base.permissions[:permissions].first[:allow_sudo]
+          prefix = "sudo su #{Base.config[:shell_user] || 'root'} -c "
+        else
+          prefix = ''
+        end
+
+        environ = environment.map do |key, val|
+          "#{key}='#{val}'"
+        end.join(' ')
+
+        dir = "/srv/www/#{Base.config[:app]}/current"
+        chdir = "cd #{dir}"
+        path = "PATH=/usr/local/bin:#{dir}/script/:${PATH}"
+        network_path = create_ssh_path
+
+        relative = relative_command ? '/usr/bin/env' : ''
+
+        bash_command = (command && "-c \\\\\\\"#{chdir} && #{relative} #{command}\\\\\\\"") || ''
+
+        %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{environ} #{path} bash #{bash_command}\\"")
       end
-
-      environ = environment.map do |key, val|
-        "#{key}='#{val}'"
-      end.join(' ')
-
-      network_path = create_ssh_path
-      bash_command = (command && "-c \\\\\\\"#{chdir} && #{command}\\\\\\\"") || ''
-
-      %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{environ} bash #{bash_command}\\"")
     end
 
     def shell
-      exec ssh_command
+      exec Ridoku::Run.command
     end
 
     def run_command
-      exec ssh_command(ARGV.join(' '))
+      exec Ridoku::Run.command(ARGV.join(' '))
     end
 
     def print_run_help

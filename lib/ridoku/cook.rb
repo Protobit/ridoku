@@ -83,7 +83,7 @@ module Ridoku
     end
 
     def cook
-      self.cook_recipe(ARGV)
+      Ridoku::Cook.cook_recipe(ARGV)
     end
 
     def print_cook_help

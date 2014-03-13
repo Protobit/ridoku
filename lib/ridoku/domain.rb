@@ -12,8 +12,9 @@ module Ridoku
     attr_accessor :domains
 
     def run
-      command = Base.config[:command]
-      sub_command = (command.length > 0 && command[1]) || nil
+      clist = Base.config[:command]
+      command = clist.shift
+      sub_command = clist.shift
 
       environment = load_environment
 

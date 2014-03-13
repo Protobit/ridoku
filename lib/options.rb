@@ -18,6 +18,11 @@ module Ridoku
        Use the specified key as the AWS_ACCESS_KEY   
     EOF
       ],
+      [ '--force', '-F', GetoptLong::NO_ARGUMENT,<<-EOF
+
+       Used to force an operation (e.g., deploy)
+    EOF
+      ],
       [ '--secret', '-s', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
 <secret>
        Use the specified secret as the AWS_SECRET_KEY   
@@ -90,6 +95,12 @@ module Ridoku
 <domains>
        Optional for: #{$stderr.colorize('create:app', :bold)}
        Add the specified domains to the newly created application.
+    EOF
+      ],
+      [ '--lines', '-L', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
+<lines>
+       Optional for: #{$stderr.colorize('log:*', :bold)}
+       Print the specified number of lines. 
     EOF
       ],
       [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
