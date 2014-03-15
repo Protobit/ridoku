@@ -200,6 +200,7 @@ EOF
         recipe_data = {
           backup: {
             databases: Base.config[:app].downcase.split(','),
+            force: Base.config[:force] || false,
             dump: {
               type: 's3',
               region: 'us-west-1',
