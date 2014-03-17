@@ -271,8 +271,6 @@ unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
   exit 1
 end
 
-AWS.config(config)
-
 if !Ridoku::Base.config[:local_init] || Ridoku::Base.config[:wizard]
   begin
     wizard = Ridoku::ConfigWizard.new
@@ -305,6 +303,7 @@ if Ridoku::Base.config[:debug]
   })
 end
 
+AWS.config(config)
 Ridoku::Base.config[:command] = ARGV.shift.split(':')
 
 if Ridoku::Base.config[:command][0] == 'help'
