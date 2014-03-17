@@ -326,6 +326,10 @@ module Ridoku
         end
       end
 
+      def if_debug?(&block)
+        yield if config[:debug]
+      end
+
       def roles_configured?
         fetch_roles
         service_role_configured? && instance_role_configured?

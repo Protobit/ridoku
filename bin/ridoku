@@ -265,6 +265,20 @@ rescue => e
   exit 1
 end
 
+if Ridoku::Base.config[:debug]
+  # log to standard out, strip all of the Ruby logger standard prefixes
+  logger = Logger.new($stdout)
+  logger.formatter = proc { |severity, datetime, progname, msg| msg }
+
+  config.merge!({
+    logger: logger,
+    log_formatter: AWS::Core::LogFormatter.colored,
+    http_wire_trace: true
+  })
+end
+
+AWS.config(config)
+
 unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
   puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
   print_help
@@ -291,19 +305,6 @@ unless ARGV.length > 0
   exit 1
 end
 
-if Ridoku::Base.config[:debug]
-  # log to standard out, strip all of the Ruby logger standard prefixes
-  logger = Logger.new($stdout)
-  logger.formatter = proc { |severity, datetime, progname, msg| msg }
-
-  config.merge!({
-    logger: logger,
-    log_formatter: AWS::Core::LogFormatter.colored,
-    http_wire_trace: true
-  })
-end
-
-AWS.config(config)
 Ridoku::Base.config[:command] = ARGV.shift.split(':')
 
 if Ridoku::Base.config[:command][0] == 'help'

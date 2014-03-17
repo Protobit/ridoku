@@ -83,16 +83,35 @@ module Ridoku
 
         bash_command = (command && "-c \\\\\\\"#{chdir} && #{relative} #{command}\\\\\\\"") || ''
 
-        %Q(/usr/bin/env ssh -t #{network_path} "#{prefix} \\"#{environ} #{path} bash #{bash_command}\\"")
+        [
+          "/usr/bin/env ssh",
+          "-i #{Base.config[:ssh_key]}",
+          "-t #{network_path}",
+          %Q("#{prefix} \\"#{environ} #{path} bash #{bash_command}\\"")
+        ].join(' ')
       end
     end
 
     def shell
-      exec Ridoku::Run.command
+      command = Ridoku::Run.command
+
+      Base.if_debug? do
+        $stdout.puts 'Running shell with command:'
+        $stdout.puts command
+      end
+
+      exec command
     end
 
     def run_command
-      exec Ridoku::Run.command(ARGV.join(' '))
+      command = Ridoku::Run.command(ARGV.join(' '))
+
+      Base.if_debug? do
+        $stdout.puts 'Running command:'
+        $stdout.puts command
+      end
+
+      exec command
     end
 
     def print_run_help
