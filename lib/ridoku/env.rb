@@ -38,9 +38,9 @@ module Ridoku
 
     def load_environment
       Base.fetch_stack
-
+      Base.fetch_app
       self.environment =
-        Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
+        Base.custom_json['deploy'][Base.app[:shortname]]['app_env']
     end
 
     def print_env_help
@@ -68,7 +68,7 @@ module Ridoku
     def push
       $stdout.puts "Pushing current environment..."
 
-      Base.standard_deploy('rails-app', 
+      Base.standard_deploy('rails-app',
         {
           opsworks_custom_cookbooks: {
             recipes: [

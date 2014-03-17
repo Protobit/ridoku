@@ -52,8 +52,8 @@ module Ridoku
         true
       end
 
-      def cook_recipe(recipes) 
-        Base.fetch_app
+      def cook_recipe(recipes, custom_json = nil) 
+        Base.fetch_app()
 
         recipes = [recipes] unless recipes.is_a?(Array)
 
@@ -76,7 +76,7 @@ module Ridoku
         end
 
         command = Base.execute_recipes(Base.app[:app_id], instance_ids,
-          Base.config[:comment], recipes)
+          Base.config[:comment], recipes, custom_json)
 
         Base.run_command(command)
       end

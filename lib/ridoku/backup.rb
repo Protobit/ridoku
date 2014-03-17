@@ -24,9 +24,9 @@ module Ridoku
       when 'init'
         init
       when 'capture'
-        capture
+        capture(sub)
       when 'restore'
-        restore(ARGV.shift)
+        restore(sub, ARGV.shift)
       when 'delete', 'remove', 'rm'
         remove(ARGV.shift)
       else
@@ -40,7 +40,7 @@ module Ridoku
       Base.fetch_stack
       Base.fetch_layer
       self.dbase =
-        Base.custom_json['deploy'][Base.config[:app].downcase]['database']
+        Base.custom_json['deploy'][Base.config[:app]]['database']
     end
 
     def print_backup_help
@@ -54,6 +54,14 @@ List/Modify the current app's database backups.
    backup:rm <name>   remove specified backup by name.
    backup:capture     capture a backup form the specified application database.
    backup:url <name>  get a download URL for the specified database backup.
+
+   Development:
+   backup:capture:local <pg_dump path> 
+    Capture a backup locally using the apps config.  Include the path the
+    desired 'pg_dump' command.  Version 9.2 or above is required.
+   backup:restore:local <pg_restore path> 
+    Restore a backup locally using the apps config.  Include the path the
+    desired 'pg_restore' command.  Version 9.2 or above is required.
 
 EOF
     end
@@ -164,7 +172,41 @@ EOF
       $stdout.puts $stdout.colorize('Found!', :green)
     end
 
-    def capture
+    def dump_local()
+      load_database
+
+      command = ARGV.shift
+
+      unless m = `#{command} --version`.match(/(9[.][23]([.][0-9]+)?)/)
+        $stderr.puts "Invalid pg_dump version #{m[1]}."
+        return
+      end
+
+      backup_file = "#{Base.config[:app]}-"\
+        "#{Time.now.utc.strftime("%Y%m%d%H%M%S")}.sql"
+
+      $stdout.puts "pg_dump version: #{$stdout.colorize(m[1], :green)}"
+      $stdout.puts "Creating backup file: #{backup_file}"
+
+      # Add PGPASSWORD to the environment.
+      ENV['PGPASSWORD'] = dbase['password']
+
+      system(["#{command}",
+        "-Fc",
+        "-h #{dbase['host']}",
+        "-U #{dbase['username']}",
+        "-p #{dbase['port']}",
+        "#{dbase['database']}",
+        "> #{backup_file}"].join(' '))
+
+      $stdout.puts $stdout.colorize("pg_dump complete.", :green)
+      $stdout.puts "File size: #{::File.size(backup_file)}"
+      ENV['PGPASSWORD'] = nil
+    end
+
+    def capture(opt)
+      return dump_local if opt == 'local'
+
       bucket_exists!
 
       recipe_data = {
@@ -190,9 +232,41 @@ EOF
       Base.run_command(command)
     end
 
-    def restore(sub)
+    def restore_local(file)
+      load_database
+
+      command = ARGV.shift
+
+      unless m = `#{command} --version`.match(/(9[.][23]([.][0-9]+)?)/)
+        $stderr.puts "Invalid pg_restore version #{m[1]}."
+        return
+      end
+
+      $stdout.puts "pg_restore version: #{$stdout.colorize(m[1], :green)}"
+      $stdout.puts "Using backup file: #{file}"
+
+      # Add PGPASSWORD to the environment.
+      ENV['PGPASSWORD'] = dbase['password']
+
+      system(["#{command}",
+        "--clean",
+        "#{'--single-transaction' unless Base.config[:force]}",
+        "-h #{dbase['host']}",
+        "-U #{dbase['username']}",
+        "-p #{dbase['port']}",
+        "-d #{dbase['database']}",
+        "#{file}"].join(' '))
+
+      $stdout.puts $stdout.colorize("pg_restore complete.", :green)
+      $stdout.puts "File size: #{::File.size(backup_file)}"
+      ENV['PGPASSWORD'] = nil
+    end
+
+    def restore(sub, arg)
+      return restore_local(file) if sub == 'local'
+
       bucket_exists!
-      object_exists!(sub, 'restore')
+      object_exists!(arg, 'restore')
       $stdout.puts 'Are you sure you want to restore this database dump? [yes/N]'
       res = $stdin.gets.chomp
 
@@ -205,14 +279,14 @@ EOF
               type: 's3',
               region: 'us-west-1',
               bucket: Base.config[:backup_bucket],
-              key: sub
+              key: arg
             }
           }
         }
 
         Base.fetch_app
         Base.fetch_instance
-        layer_ids = Base.get_layer_id('postgresql')
+        layer_ids = Base.get_layer_ids('postgresql')
 
         Base.instances.select! do |inst|
           next false unless inst[:status] == 'online'

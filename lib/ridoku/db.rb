@@ -27,7 +27,7 @@ module Ridoku
       when 'set', 'add'
         set
       when 'push', 'update'
-        push
+        push_update
       when 'delete', 'remove', 'rm'
         delete
       when 'url', 'path'
@@ -41,54 +41,74 @@ module Ridoku
 
     def load_database
       Base.fetch_stack
+      Base.fetch_app
       self.dbase =
-        Base.custom_json['deploy'][Base.config[:app].downcase]['database']
-    end
-
-    def scheme_hash
-      {
-        'postgresql' => 'postgres',
-        'mysql' => 'mysql'
-      }
-    end
-
-    def scheme_from_adapter(adapter)
-      val = scheme_hash
-      return val[adapter] if val.key?(adapter)
-      adapter
-    end
-
-    def adapter_from_scheme(scheme)
-      val = scheme_hash.invert
-      return val[scheme] if val.key?(scheme)
-      scheme
+        Base.custom_json['deploy'][Base.app[:shortname]]['database']
     end
 
     def print_db_help
       $stderr.puts <<-EOF
-    Command: database
+Command: database
 
-    List/Modify the current app's database configuration.
-       db           lists the key value pairs
-       db:set:url  attribute:value [...]
-       db:delete    attribute [...]
-       db:url      get the URL form of the database info
-       db:url:set  set attributes using a URL
+List/Modify the current app's database configuration.
+   db           lists the key value pairs
+   db:push      push changes to the servers
+   db:set:url   attribute:value [...]
+   db:delete    attribute [...]
+   db:url       get the URL form of the database info
+   db:url:set   set attributes using a URL
 
-    examples:
-      $ db:set database:'Survly'
-      Database:
-        adapter: postgresql
-        host: ec2-50-47-234-2.amazonaws.com
-        port: 5234
-        database: Survly
-        username: survly
-        reconnect: true
+examples:
+  $ db:set database:'Survly'
+  Database:
+    adapter: postgresql
+    host: ec2-50-47-234-2.amazonaws.com
+    port: 5234
+    database: Survly
+    username: survly
+    reconnect: true
       EOF
     end
 
     def push_update
-      puts 'TODO: need a deploy::database-update'
+      if Base.config[:wait]
+        $stdout.puts 'Disabling command wait (2 commands to issue)...' 
+        Base.config[:wait] = false
+      end
+
+      Base.fetch_app
+
+      cjson = {
+        opsworks: {
+          rails_stack: {
+            restart_command: '../../shared/scripts/unicorn force-restart'
+          }  
+        },
+        deploy: {
+          Base.app[:shortname] => {
+            application_type: 'rails'
+          }
+        }
+      }
+
+      begin
+        $stdout.puts 'This operation will '\
+          "#{$stdout.colorize('RESTART', :red)} (not soft reload) "\
+          'your application.'
+        sleep 2
+        $stdout.puts 'Hold your seats: db push and force restart in... (Press CTRL-C to Stop)'
+        5.times { |t| $stdout.print "#{$stdout.colorize(5-t, :red)} "; sleep 1 }
+        $stdout.puts "\nSilence is acceptance..."
+      rescue Interrupt
+        $stdout.puts $stdout.colorize("\nCommand canceled", :green)
+        exit 1
+      end
+
+      Base.config[:layers] = ['rails-app']
+      Ridoku::Cook.cook_recipe('rails::configure', cjson)
+
+      Base.config[:layers] = ['workers']
+      Ridoku::Cook.cook_recipe('deploy::delayed_job-configure', cjson)
     end
 
     def list(cred)
@@ -138,7 +158,7 @@ module Ridoku
 
       regex = %r(^([^:]+)://([^:]+):([^@]+)@([^:]+):([^/]+)/(.*)$)
       ARGV[0].match(regex) do |m|
-        dbase['adapter'] = adapter_from_scheme(m[1])
+        dbase['adapter'] = Db.adapter_from_scheme(m[1])
         dbase['username'] = m[2]
         dbase['password'] = m[3]
         dbase['host'] = m[4]
@@ -147,15 +167,49 @@ module Ridoku
       end
     end
 
-    def get_url_database
-      scheme = scheme_from_adapter(dbase['adapter'])
-      username = dbase['username']
-      password = dbase['password']
-      host = dbase['host']
-      port = dbase['port']
-      database = dbase['database']
+    class << self
+      def scheme_hash
+        {
+          'postgresql' => 'postgres',
+          'mysql' => 'mysql'
+        }
+      end
 
-      unless database && scheme && host
+      def scheme_from_adapter(adapter)
+        val = scheme_hash
+        return val[adapter] if val.key?(adapter)
+        adapter
+      end
+
+      def adapter_from_scheme(scheme)
+        val = scheme_hash.invert
+        return val[scheme] if val.key?(scheme)
+        scheme
+      end
+
+      def gen_dbase_url(dbase)
+        scheme = scheme_from_adapter(dbase['adapter'])
+        username = dbase['username']
+        password = dbase['password']
+        host = dbase['host']
+        port = dbase['port']
+        database = dbase['database']
+
+        url = "#{scheme}://"
+        url += username if username
+        url += ":#{password}"
+        url += '@' if username || password
+        url += host
+        url += ":#{port}" if port
+        url += "/#{database}" if database
+        url
+      end
+    end
+
+    def get_url_database
+      scheme = Db.scheme_from_adapter(dbase['adapter'])
+
+      unless  dbase['database'] && scheme && dbase['host']
         $stdout.puts $stdout.colorize(
           "One or more required fields are not specified!",
           :bold
@@ -164,13 +218,7 @@ module Ridoku
         list_database
       end
 
-      url = "#{scheme}://"
-      url += username if username
-      url += ":#{password}"
-      url += '@' if username || password
-      url += host
-      url += ":#{port}" if port
-      url += "/#{database}" if database
+      url = Db.gen_dbase_url(dbase)
       $stdout.puts $stdout.colorize(url, :bold)
     end
 

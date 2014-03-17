@@ -59,7 +59,7 @@ module Ridoku
         command.gsub!(/\$/, '\\'*14 + '$') if command
 
         environment =
-          Base.custom_json['deploy'][Base.config[:app].downcase]['app_env']
+          Base.custom_json['deploy'][Base.app[:shortname]]['app_env']
 
         fail Ridoku::NoSshAccess.new unless
           Base.permissions[:permissions].first[:allow_ssh]
@@ -74,7 +74,7 @@ module Ridoku
           "#{key}='#{val}'"
         end.join(' ')
 
-        dir = "/srv/www/#{Base.config[:app]}/current"
+        dir = "/srv/www/#{Base.app[:shortname]}/current"
         chdir = "cd #{dir}"
         path = "PATH=/usr/local/bin:#{dir}/script/:${PATH}"
         network_path = create_ssh_path

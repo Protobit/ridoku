@@ -138,12 +138,22 @@ module Ridoku
         return layers if layers && !options[:force]
         fetch_stack
 
-        self.layers = self.layer_list = aws_client.describe_layers(
-          stack_id: stack[:stack_id])[:layers]
+        unless self.layer_list
+          self.layers = self.layer_list = aws_client.describe_layers(
+            stack_id: stack[:stack_id])[:layers]
+        end
+
         if shortname != :all
-          self.layers = self.layers.select do |layer|
-            layer[:shortname] == shortname
+          shortname = [shortname] unless shortname.is_a?(Array)
+          self.layers = []
+
+          shortname.each do |short|
+            self.layers << self.layer_list.select do |layer|
+              layer[:shortname] == short
+            end
           end
+
+          self.layers.flatten!
         end
       end
 
@@ -184,19 +194,19 @@ module Ridoku
         return instances if instances && !options[:force]
 
         fetch_stack
-        self.instance_list = self.instances =
-          aws_client.describe_instances(stack_id: stack[:stack_id])[:instances]
+        unless instance_list
+          self.instance_list = self.instances =
+            aws_client.describe_instances(stack_id: stack[:stack_id])[:instances]
+        end
 
         if shortname != :all
-          fetch_layer
+          fetch_layer(shortname, force: true)
           self.instances = []
 
-          layer_list.each do |layer|
-            if layer[:shortname] == shortname
-              instance = aws_client.describe_instances(
-                layer_id: layer[:layer_id])
-              self.instances << instance[:instances]
-            end
+          layers.each do |layer|
+            instance = aws_client.describe_instances(
+              layer_id: layer[:layer_id])
+            self.instances << instance[:instances]
           end
 
           self.instances.flatten!
@@ -471,9 +481,7 @@ module Ridoku
 
         # if a requested is not in the list, then its an invalid list.
         args.each do |arg|
-          if inst_names.index(arg) == nil
-            return false
-          end
+          return false if inst_names.index(arg) == nil
         end
 
         true
@@ -540,7 +548,7 @@ module Ridoku
       end
       
       def extract_instance_ids
-        Base.fetch_instance(Base.config[:layers] || :all)
+        Base.fetch_instance(Base.config[:layers] || :all, force: true)
 
         names = Base.config[:instances] || []
         instances = Base.instances.select do |inst|
@@ -602,7 +610,7 @@ module Ridoku
       end
 
       def standard_deploy(layer = :all, custom_json = nil)
-        fetch_instance(layer)
+        fetch_instance(layer, force: true)
         fetch_app
 
         instances.select! { |inst| inst[:status] == 'online' }

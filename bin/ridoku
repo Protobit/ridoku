@@ -227,7 +227,7 @@ begin
     when '--instances'
       Ridoku::Base.config[:instances] = arg.split(%r(,|\||;|:))
 
-      validate(opt,arg) do |option, argument|
+      validate(opt, Ridoku::Base.config[:instances]) do |option, argument|
         unless Ridoku::Base.valid_instances?(argument)
           $stderr.puts 'Invalid instances provided.'
 

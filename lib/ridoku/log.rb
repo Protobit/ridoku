@@ -29,8 +29,10 @@ module Ridoku
     protected
 
     def unicorn_log_command
+      Base.fetch_app
+
       lines = "#{Base.config[:lines] || 250}"
-      dir = "/srv/www/#{Base.config[:app]}/shared/log"
+      dir = "/srv/www/#{Base.app[:shortname]}/shared/log"
       "for f in #{dir}/*.log; do echo "\
       "#{$stdout.colorize("Log #{lines}: $f; "\
       "echo #{'=' * 80}", [:bold])};"\

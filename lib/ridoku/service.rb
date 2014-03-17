@@ -42,13 +42,13 @@ module Ridoku
 
       environment = load_environment
       case sub_command
-      when 'list', nil
+      when 'list'
         list
       when 'set', 'add'
         add
       when 'delete', 'remove', 'rm'
         delete
-      when 'config'
+      when 'config', nil
         config(ARGV)
       else
         print_service_help
@@ -117,6 +117,7 @@ examples:
     end
 
     def config(argv)
+      return list unless argv.length > 0
       klass, cmd = argv.shift.split(/:/)
 
       if klass.nil?
