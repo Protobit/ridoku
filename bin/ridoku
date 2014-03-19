@@ -277,64 +277,70 @@ if Ridoku::Base.config[:debug]
   })
 end
 
-AWS.config(config)
+begin 
+  AWS.config(config)
 
-unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
-  puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
-  print_help
-  exit 1
-end
+  unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
+    puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
+    print_help
+    exit 1
+  end
 
-if !Ridoku::Base.config[:local_init] || Ridoku::Base.config[:wizard]
+  if !Ridoku::Base.config[:local_init] || Ridoku::Base.config[:wizard]
+    begin
+      wizard = Ridoku::ConfigWizard.new
+      wizard.run
+    rescue Ridoku::InvalidConfig => e
+      $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
+      $stderr.puts 'Use the `list` command to see relavent info.'
+      print_help
+      exit 1
+    end
+  end
+
+  validate_arguments
+
+  unless ARGV.length > 0
+    puts 'No arguments specified.'
+    print_help
+    exit 1
+  end
+
+  Ridoku::Base.config[:command] = ARGV.shift.split(':')
+
+  if Ridoku::Base.config[:command][0] == 'help'
+    print_help(true)
+    exit 0
+  end
+
   begin
-    wizard = Ridoku::ConfigWizard.new
-    wizard.run
+    command = Ridoku.const_get(
+      Ridoku::Base.config[:command].first.capitalize
+    ).new
+  rescue => e
+    $stderr.puts "Invalid command specified: #{Ridoku::Base.config[:command][0]}"
+    puts e.to_s if Ridoku::Base.config[:debug]
+    print_help
+    exit 1
+  end
+
+  begin
+    command.run
   rescue Ridoku::InvalidConfig => e
     $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
     $stderr.puts 'Use the `list` command to see relavent info.'
     print_help
     exit 1
+  rescue Ridoku::NoSshAccess
+    $stderr.puts 'Your user does not have access to ssh on the specified stack.'
+    print_help
+    exit 1
+  rescue ArgumentError => e
+    raise e if Ridoku::Base.config[:debug]
+    $stderr.puts e.to_s
   end
-end
-
-validate_arguments
-
-unless ARGV.length > 0
-  puts 'No arguments specified.'
-  print_help
-  exit 1
-end
-
-Ridoku::Base.config[:command] = ARGV.shift.split(':')
-
-if Ridoku::Base.config[:command][0] == 'help'
-  print_help(true)
-  exit 0
-end
-
-begin
-  command = Ridoku.const_get(
-    Ridoku::Base.config[:command].first.capitalize
-  ).new
-rescue => e
-  $stderr.puts "Invalid command specified: #{Ridoku::Base.config[:command][0]}"
-  puts e.to_s if Ridoku::Base.config[:debug]
-  print_help
-  exit 1
-end
-
-begin
-  command.run
-rescue Ridoku::InvalidConfig => e
-  $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
-  $stderr.puts 'Use the `list` command to see relavent info.'
-  print_help
-  exit 1
-rescue Ridoku::NoSshAccess
-  $stderr.puts 'Your user does not have access to ssh on the specified stack.'
-  print_help
-  exit 1
-rescue ArgumentError => e
-  raise e if Ridoku::Base.config[:debug]
+rescue AWS::OpsWorks::Errors::UnrecognizedClientException => e
   $stderr.puts e.to_s
+  $stderr.puts 'Check to ensure that AWS_ACCESS_KEY and AWS_SECRET_KEY are set properly.'
+  exit 1
 end
