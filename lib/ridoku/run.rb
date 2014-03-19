@@ -83,12 +83,15 @@ module Ridoku
 
         bash_command = (command && "-c \\\\\\\"#{chdir} && #{relative} #{command}\\\\\\\"") || ''
 
-        [
-          "/usr/bin/env ssh",
-          "-i #{Base.config[:ssh_key]}",
+        ssh_command = [
           "-t #{network_path}",
           %Q("#{prefix} \\"#{environ} #{path} bash #{bash_command}\\"")
-        ].join(' ')
+        ]
+
+        ssh_command.unshift("-i #{Base.config[:ssh_key]}") if
+          Base.config[:ssh_key]
+
+        ssh_command.unshift("/usr/bin/env ssh").join(' ')
       end
     end
 
