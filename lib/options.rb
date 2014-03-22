@@ -103,6 +103,12 @@ module Ridoku
        Print the specified number of lines. 
     EOF
       ],
+      [ '--migrate', '-M', GetoptLong::NO_ARGUMENT,<<-EOF
+<lines>
+       Optional for: #{$stderr.colorize('log:*', :bold)}
+       Print the specified number of lines. 
+    EOF
+      ],
       [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
     EOF
       ],

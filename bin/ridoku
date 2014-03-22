@@ -209,6 +209,9 @@ begin
     when '--force'
       Ridoku::Base.config[:force] = true
 
+    when '--migrate'
+      Ridoku::Base.config[:migrate] = true
+
     when '--user'
       Ridoku::Base.config[:shell_user] = arg
 

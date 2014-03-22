@@ -105,7 +105,7 @@ examples:
       end
 
       Base.config[:layers] = ['rails-app']
-      Ridoku::Cook.cook_recipe('rails::configure', cjson)
+      Ridoku::Cook.cook_recipe('deploy::database', cjson)
 
       Base.config[:layers] = ['workers']
       Ridoku::Cook.cook_recipe('deploy::delayed_job-configure', cjson)

@@ -73,6 +73,8 @@ module Ridoku
             action: 'force_deploy'
           }
         } if Base.config[:force]
+
+        json[:migrate] = true if Base.config[:migrate]
       end
 
       if Base.config[:force]
@@ -86,6 +88,7 @@ module Ridoku
         end
       end
 
+      $stdout.puts 'Database will be migrated.' if Base.config[:migrate]
       Base.standard_deploy(:all, custom_json)
     end
 
