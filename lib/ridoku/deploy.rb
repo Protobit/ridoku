@@ -20,6 +20,8 @@ module Ridoku
         deploy
       when 'rollback'
         rollback
+      when 'restart'
+        restart
       when 'info'
         info
       else
@@ -57,7 +59,7 @@ module Ridoku
         Base.config[:comment], {
           opsworks_custom_cookbooks: {
             recipes: [
-              "deploy::delayed_job-rollback"
+              "workers::rollback"
             ]
           }
         }
@@ -75,6 +77,11 @@ module Ridoku
         } if Base.config[:force]
 
         json[:migrate] = true if Base.config[:migrate]
+        json[:opsworks_custom_cookbooks] = {
+          recipes: [
+            "workers::deploy"
+          ]
+        }
       end
 
       if Base.config[:force]
@@ -90,6 +97,21 @@ module Ridoku
 
       $stdout.puts 'Database will be migrated.' if Base.config[:migrate]
       Base.standard_deploy(:all, custom_json)
+    end
+
+    def restart
+      Base.config[:layers] = 'rails-app'
+
+      custom_json = {}.tap do |json|
+        json[Base.app[:name]] = {
+          deploy: {
+            application_type: 'rails'
+          }
+        }
+      end
+
+      $stdout.puts "Restarting application: #{Base.app[:name]}."
+      Ridoku::Cook.cook_recipe('unicorn::force-restart', custom_json)
     end
 
     def info
@@ -118,6 +140,7 @@ module Ridoku
         NOTE: This will not rollback environment, database, or domain changes.
               It will only rollback source code changes.  Configurations will
               remain the same.
+    deploy:restart   Force Restart the unicorn servers (service will go down).
 
   examples:
     $ deploy

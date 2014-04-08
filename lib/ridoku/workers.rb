@@ -53,8 +53,8 @@ module Ridoku
     examples:
       $ worker
       No workers specified!
-      $ worker:add delayed_job:mail
-      $ worker:add delayed_job:sms
+      $ worker:add delayed_job=mail
+      $ worker:add delayed_job=sms
       $ worker:list
       Workers for MyCurrentApp:
        delayed_job: ["mail", "sms"]
@@ -76,7 +76,7 @@ module Ridoku
 
     def add
       ARGV.each do |worker|
-        new_workers = worker.split(':')
+        new_workers = worker.split('=')
         workers[new_workers[0]] ||= []
         workers[new_workers[0]] << new_workers[1]
         workers[new_workers[0]].flatten!

@@ -108,7 +108,7 @@ examples:
       Ridoku::Cook.cook_recipe('deploy::database', cjson)
 
       Base.config[:layers] = ['workers']
-      Ridoku::Cook.cook_recipe('deploy::delayed_job-configure', cjson)
+      Ridoku::Cook.cook_recipe('workers::configure', cjson)
     end
 
     def list(cred)

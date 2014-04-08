@@ -100,13 +100,13 @@ module Ridoku
       [ '--lines', '-L', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
 <lines>
        Optional for: #{$stderr.colorize('log:*', :bold)}
-       Print the specified number of lines. 
+       Print the specified number of lines.
     EOF
       ],
       [ '--migrate', '-M', GetoptLong::NO_ARGUMENT,<<-EOF
-<lines>
-       Optional for: #{$stderr.colorize('log:*', :bold)}
-       Print the specified number of lines. 
+
+       Optional for: #{$stderr.colorize('deploy', :bold)}
+       Migrate the database after deploying the source.
     EOF
       ],
       [ '--layer', '-l', GetoptLong::REQUIRED_ARGUMENT,<<-EOF
