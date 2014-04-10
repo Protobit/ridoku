@@ -72,6 +72,7 @@ module Ridoku
         {
           opsworks_custom_cookbooks: {
             recipes: [
+              "workers::default",
               "deploy::environment"
             ]
           }
