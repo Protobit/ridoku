@@ -100,8 +100,9 @@ module Ridoku
     end
 
     def restart
-      Base.config[:layers] = 'rails-app'
+      Base.fetch_app
 
+      Base.config[:layers] = 'rails-app'
       custom_json = {}.tap do |json|
         json[Base.app[:name]] = {
           deploy: {
