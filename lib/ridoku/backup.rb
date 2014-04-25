@@ -317,7 +317,7 @@ EOF
       bucket_exists!
       object = object_exists!(sub, 'get url')
 
-      $stdout.puts object.url_for(:read)
+      $stdout.puts object.url_for(:read, expires: 60)
     end
 
     def remove(sub)
