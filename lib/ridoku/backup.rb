@@ -25,6 +25,8 @@ module Ridoku
         init
       when 'capture'
         capture(sub)
+      when 'url'
+        url(ARGV.shift)
       when 'restore'
         restore(sub, ARGV.shift)
       when 'delete', 'remove', 'rm'
@@ -151,25 +153,29 @@ EOF
 
       s3 = AWS::S3.new
       bucket = s3.buckets[Base.config[:backup_bucket]]
+
       $stdout.print "Checking for '#{$stdout.colorize(bucket.name, :bold)}' "\
-        'S3 Buckets... '
+        'S3 Buckets... ' if $stdout.tty?
 
       fail_uninitialized_bucket! unless bucket.exists?
 
-      $stdout.puts $stdout.colorize('Found!', :green)
+      $stdout.puts $stdout.colorize('Found!', :green) if $stdout.tty?
     end
 
     def object_exists!(sub, action)
-      fail_undefined_object!(action) if sub.nil? || !sub.present?
+      fail_undefined_object!(sub, action) if sub.nil? || !sub.present?
 
       s3 = AWS::S3.new
       bucket = s3.buckets[Base.config[:backup_bucket]]
       $stdout.print "Checking for '#{$stdout.colorize(sub, :bold)}' "\
-        'in bucket... '
+        'in bucket... ' if $stdout.tty?
 
-      fail_object_not_found! unless bucket.objects[sub].exists?
+      object = bucket.objects[sub]
+      fail_object_not_found! unless object.exists?
 
-      $stdout.puts $stdout.colorize('Found!', :green)
+      $stdout.puts $stdout.colorize('Found!', :green) if $stdout.tty?
+
+      object
     end
 
     def dump_local()
@@ -307,17 +313,22 @@ EOF
       end
     end
 
+    def url(sub)
+      bucket_exists!
+      object = object_exists!(sub, 'get url')
+
+      $stdout.puts object.url_for(:read)
+    end
+
     def remove(sub)
       bucket_exists!
-      object_exists!(sub, 'remove')
+      object = object_exists!(sub, 'remove')
 
       $stdout.puts 'Are you sure you want to delete this file? [yes/N]'
       res = $stdin.gets.chomp
 
       if res.present? && res == 'yes'
         s3 = AWS::S3.new
-        bucket = s3.buckets[Base.config[:backup_bucket]]
-        object = bucket.objects[sub]
         object.delete
 
         $stdout.puts 'Request object deleted.'
@@ -354,7 +365,7 @@ EOF
       )
     end
 
-    def fail_undefined_object!(action)
+    def fail_undefined_object!(sub, action)
       # Fail if object name not set
       fail ArgumentError.new(<<EOF
 The specified backup (#{Base.config[:backup_bucket]}/#{sub}) doesn't exist!
