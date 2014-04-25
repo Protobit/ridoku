@@ -8,6 +8,7 @@ gem 'aws-sdk'
 
 # For fetching logs from S3.
 gem 'rest-client'
+gem 'rake'
 
 gem 'require_all'
 
