@@ -70,13 +70,13 @@ module Ridoku
 
     def deploy
       custom_json = {}.tap do |json|
-        json[:deploy] = {
-          Base.config[:app] => {
-            action: 'force_deploy'
-          }
-        } if Base.config[:force]
+        app = Base.config[:app]
 
-        json[:migrate] = true if Base.config[:migrate]
+        json[:deploy] = {}
+        json[:deploy][app] = {}
+        json[:deploy][app][:action] = 'force_deploy' if Base.config[:force]
+        json[:deploy][app][:migrate] = true if Base.config[:migrate]
+
         json[:opsworks_custom_cookbooks] = {
           recipes: [
             "workers::deploy"

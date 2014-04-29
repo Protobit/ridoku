@@ -197,7 +197,7 @@ begin
       Ridoku::Base.config[:wizard] = true
 
     when '--lines'
-      unless arg.match(/^[0-9+]$/)
+      unless arg.match(/^[0-9]+$/)
         $stderr.puts '--lines must be a number!'
         exit 1
       end
