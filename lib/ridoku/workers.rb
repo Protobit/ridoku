@@ -37,29 +37,30 @@ module Ridoku
 
     def print_worker_help
       $stderr.puts <<-EOF
-    Command: worker
+Command: worker
 
-    List/Modify the current app's associated workers.
-       worker[:list]   lists the worker type and separate process queues
-       worker:add      worker, e.g., delayed_job:queue_name
-       worker:delete   delete all keys associated with a worker
+List/Modify the current app's associated workers.
+   worker[:list]   lists the worker type and separate process queues
+   worker:add      worker, e.g., delayed_job:queue_name
+   worker:delete   delete all keys associated with a worker
 
-    Example 'worker:list' output:
-       delayed_job: ["mail", "sms"]
+Example 'worker:list' output:
+   delayed_job: ["mail", "sms"]
 
-    The above list output indicates a DelayedJob worker and two separate
-    delayed_job processes.  One processing 'mail'; the other processing 'sms'.
+The above list output indicates a DelayedJob worker and two separate
+delayed_job processes.  One processing 'mail'; the other processing 'sms'.
 
-    examples:
-      $ worker
-      No workers specified!
-      $ worker:add delayed_job=mail
-      $ worker:add delayed_job=sms
-      $ worker:list
-      Workers for MyCurrentApp:
-       delayed_job: ["mail", "sms"]
-      $ worker:delete delayed_job
-      No workers specified!
+examples:
+  $ worker
+  No workers specified!
+  $ worker:add delayed_job=mail
+  $ worker:add delayed_job=sms
+  $ worker:add sneakers=Workers::MailWorker
+  $ worker:list
+  Workers for MyCurrentApp:
+   delayed_job: ["mail", "sms"]
+  $ worker:delete delayed_job
+  No workers specified!
       EOF
     end
 
