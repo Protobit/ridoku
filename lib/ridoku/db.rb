@@ -94,13 +94,13 @@ examples:
       begin
         $stdout.puts 'This operation will '\
           "#{$stdout.colorize('RESTART', :red)} (not soft reload) "\
-          'your application.'
+          'your application servers and worker servers.'
         sleep 2
         $stdout.puts 'Hold your seats: db push and force restart in... (Press CTRL-C to Stop)'
         5.times { |t| $stdout.print "#{$stdout.colorize(5-t, :red)} "; sleep 1 }
         $stdout.puts "\nSilence is acceptance..."
       rescue Interrupt
-        $stdout.puts $stdout.colorize("\nCommand canceled", :green)
+        $stdout.puts $stdout.colorize("\nCommand canceled successfully!", :green)
         exit 1
       end
 
@@ -108,7 +108,7 @@ examples:
       Ridoku::Cook.cook_recipe('deploy::database', cjson)
 
       Base.config[:layers] = ['workers']
-      Ridoku::Cook.cook_recipe('workers::configure', cjson)
+      Ridoku::Cook.cook_recipe(['rails::configure', 'workers::configure'], cjson)
     end
 
     def list(cred)
