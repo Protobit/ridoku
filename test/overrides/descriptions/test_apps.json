@@ -1,0 +1,59 @@
+{
+  "apps": [
+    {
+      "app_id": "8969ad87-e480-44ec-9fa5-43ef95c8cf84",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "shortname": "test",
+      "name": "test",
+      "type": "rails",
+      "app_source": {
+        "type": "git",
+        "url": "git@github.com:test-account/project.git",
+        "ssh_key": "*****FILTERED*****",
+        "revision": "heroku-production"
+      },
+      "domains": [
+        "test-domain.net",
+        "experimental.test-doma.in"
+      ],
+      "enable_ssl": true,
+      "ssl_configuration": {
+        "certificate": "test-certificate",
+        "private_key": "test-private-key"
+      },
+      "attributes": {
+        "AutoBundleOnDeploy": "true",
+        "DocumentRoot": "public",
+        "RailsEnv": "production"
+      },
+      "created_at": "2013-06-26T20:20:28+00:00"
+    },
+    {
+      "app_id": "5aec6398-0616-487e-888f-282ba75594fa",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "shortname": "test_staging",
+      "name": "test-staging",
+      "type": "rails",
+      "app_source": {
+        "type": "git",
+        "url": "git@github.com:test-account/project.git",
+        "ssh_key": "*****FILTERED*****",
+        "revision": "heroku-staging"
+      },
+      "domains": [
+        "staging.poseidonsfury.com",
+        "opsworks.poseidonsfury.com",
+        "experimental.surv.ly"
+      ],
+      "enable_ssl": false,
+      "ssl_configuration": {
+      },
+      "attributes": {
+        "AutoBundleOnDeploy": "true",
+        "DocumentRoot": "public",
+        "RailsEnv": "staging"
+      },
+      "created_at": "2014-02-22T00:11:58+00:00"
+    }
+  ]
+}

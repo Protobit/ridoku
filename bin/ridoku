@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 
 require 'aws'
+
 require 'logger'
 require 'json'
 require 'getoptlong'

@@ -6,6 +6,13 @@ require 'active_support/inflector'
 require 'securerandom'
 require 'restclient'
 
+# def write_response(file, base, hash)
+#   content = {}.tap do |opt|
+#     opt[base] = hash
+#   end
+#   IO.write(file, JSON.pretty_generate(content))
+# end
+
 module Ridoku
   class InvalidConfig < StandardError
     attr_accessor :type, :error
@@ -70,6 +77,7 @@ module Ridoku
         fail InvalidConfig.new(:stack, :none) unless stack_name ||
           !options[:force]
 
+        # write_response('test_stacks.json', :stacks, aws_client.describe_stacks[:stacks])
         self.stack_list = aws_client.describe_stacks[:stacks]
         self.stack = nil
         
@@ -101,6 +109,8 @@ module Ridoku
 
         fail InvalidConfig.new(:app, :none) unless app_name
 
+        # write_response('test_apps.json', :apps,
+        #           aws_client.describe_apps(stack_id: stack[:stack_id])[:apps])                
         self.app_list = aws_client.describe_apps(stack_id: stack[:stack_id])[:apps]
         self.app = nil
 
@@ -194,6 +204,9 @@ module Ridoku
         return instances if instances && !options[:force]
 
         fetch_stack
+
+        # write_response('test_instance.json', :instances,
+        #   aws_client.describe_instances(stack_id: stack[:stack_id])[:instances])
         unless instance_list
           self.instance_list = self.instances =
             aws_client.describe_instances(stack_id: stack[:stack_id])[:instances]

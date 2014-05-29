@@ -1,0 +1,187 @@
+{
+  "instances": [
+    {
+      "instance_id": "9a2c310d-0186-4d49-8b4b-50303e198274",
+      "ec2_instance_id": "i-1fde2c43",
+      "hostname": "mukujara",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "cae94a4c-6f39-43a6-a5c4-598018997e14"
+      ],
+      "security_group_ids": [
+        "sg-2222",
+        "sg-3333"
+      ],
+      "instance_type": "m1.small",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-3fce4a4e1",
+      "availability_zone": "us-west-1a",
+      "private_dns": "ip-10-12-12-58.us-west-1.compute.internal",
+      "public_ip": "50.12.12.181",
+      "private_ip": "10.12.12.58",
+      "elastic_ip": "54.12.12.13",
+      "ssh_key_name": "test",
+      "ssh_host_rsa_key_fingerprint": "dc:d8:45:c7:d7:06:89:6d:60:bd:4b:cd:48:fa:67:38",
+      "ssh_host_dsa_key_fingerprint": "56:84:5a:79:a3:14:9a:2f:96:9f:a5:fb:3a:f5:6d:6d",
+      "created_at": "2013-06-26T20:08:23+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "instance-store",
+      "install_updates_on_boot": true
+    },
+    {
+      "instance_id": "dd8a5a09-2d34-4e8c-8b5c-beb55b8a4212",
+      "ec2_instance_id": "i-47cf441b",
+      "hostname": "kamaitachi",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "3ab91dff-64d6-433c-b558-405e77154ab9"
+      ],
+      "security_group_ids": [
+        "sg-2222",
+        "sg-3333"
+      ],
+      "instance_type": "m1.small",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-a4e29f3e1",
+      "availability_zone": "us-west-1a",
+      "private_dns": "ip-10-168-123-123.us-west-1.compute.internal",
+      "public_ip": "184.169.123.123",
+      "private_ip": "10.168.123.123",
+      "elastic_ip": "184.72.123.123",
+      "ssh_key_name": "test",
+      "ssh_host_rsa_key_fingerprint": "d7:1f:8a:7e:3d:b1:2d:56:32:61:e0:16:ee:06:4b:eb",
+      "ssh_host_dsa_key_fingerprint": "3f:32:19:a6:79:ec:67:fc:2f:a6:63:2f:17:a7:ee:f5",
+      "created_at": "2013-11-01T21:32:23+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "instance-store",
+      "install_updates_on_boot": true
+    },
+    {
+      "instance_id": "d0305c9e-0d5d-4c28-9ee4-b1ffb3726610",
+      "ec2_instance_id": "i-494cb813",
+      "hostname": "tanuki",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "4f8d9d57-48d4-47ac-bc55-cdaad2170357"
+      ],
+      "security_group_ids": [
+
+      ],
+      "instance_type": "m1.medium",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-12312412",
+      "availability_zone": "us-west-1a",
+      "public_dns": "ec2-123-123-8-176.us-west-1.compute.amazonaws.com",
+      "private_dns": "ip-123-123-87-16.us-west-1.compute.internal",
+      "public_ip": "123.123.8.176",
+      "private_ip": "123.123.87.16",
+      "elastic_ip": "123.123.8.176",
+      "ssh_key_name": "TEST",
+      "ssh_host_rsa_key_fingerprint": "fd:59:15:4d:a6:e0:1f:7d:bc:1d:2a:e4:90:cb:63:d8",
+      "ssh_host_dsa_key_fingerprint": "38:66:28:69:06:b8:c3:ec:d0:a9:d0:08:d8:0f:e8:f8",
+      "created_at": "2013-11-02T02:51:11+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "ebs",
+      "root_device_volume_id": "vol-bafedfc93",
+      "install_updates_on_boot": true
+    },
+    {
+      "instance_id": "8e4b95c3-3b4b-43bc-8c47-445feecc13b7",
+      "ec2_instance_id": "i-1f038ef1",
+      "hostname": "oiwa",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "a74594a6-6938-43b7-872b-83281398231d"
+      ],
+      "security_group_ids": [
+        "sg-2222",
+        "sg-3333"
+      ],
+      "instance_type": "m1.small",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-a498123121",
+      "availability_zone": "us-west-1a",
+      "public_dns": "ec2-50-123-123-33.us-west-1.compute.amazonaws.com",
+      "private_dns": "ip-10-123-123-239.us-west-1.compute.internal",
+      "public_ip": "54.123.123.56",
+      "private_ip": "10.123.123.239",
+      "elastic_ip": "50.123.123.33",
+      "ssh_key_name": "survly",
+      "ssh_host_rsa_key_fingerprint": "f8:78:1d:40:4f:72:2e:42:09:65:39:af:f0:fb:11:13",
+      "ssh_host_dsa_key_fingerprint": "2a:c4:3e:34:bf:51:d6:4c:2b:95:cd:d3:58:79:b2:75",
+      "created_at": "2014-01-28T03:26:37+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "instance-store",
+      "install_updates_on_boot": true
+    },
+    {
+      "instance_id": "6880b68f-6e5e-4b7c-b7e1-f85f8d6bef94",
+      "ec2_instance_id": "i-172fac4b",
+      "hostname": "shokera",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "1e69a093-ec89-459e-b27c-c50134e50ba5"
+      ],
+      "security_group_ids": [
+        "sg-2222",
+        "sg-3333"
+      ],
+      "instance_type": "m1.small",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-f4cca4e1",
+      "availability_zone": "us-west-1a",
+      "public_dns": "ec2-54-123-123-94.us-west-1.compute.amazonaws.com",
+      "private_dns": "ip-10-123-123-85.us-west-1.compute.internal",
+      "public_ip": "54.123.123.94",
+      "private_ip": "10.123.123.85",
+      "ssh_key_name": "survly",
+      "ssh_host_rsa_key_fingerprint": "70:ae:72:de:87:5a:bd:b5:f3:53:6d:59:0b:61:4a:bc",
+      "ssh_host_dsa_key_fingerprint": "3f:55:25:d4:28:4f:4a:4a:e4:b7:4e:2f:4a:37:18:c5",
+      "created_at": "2014-02-20T05:57:01+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "instance-store",
+      "install_updates_on_boot": true
+    },
+    {
+      "instance_id": "128962ba-4cb6-4553-b03f-ff51c4b59e36",
+      "ec2_instance_id": "i-bc3a3fc1",
+      "hostname": "hibagon",
+      "stack_id": "d6ca870a-db78-45df-994c-235f9b0db343",
+      "layer_ids": [
+        "cae94a4c-6f39-43a6-a5c4-598018997e14"
+      ],
+      "security_group_ids": [
+        "sg-1111",
+        "sg-2222",
+        "sg-3333"
+      ],
+      "instance_type": "m3.medium",
+      "instance_profile_arn": "arn:aws:iam::1234:instance-profile/aws-opsworks-ec2-role",
+      "status": "online",
+      "os": "Ubuntu 12.04 LTS",
+      "ami_id": "ami-a498abc93",
+      "availability_zone": "us-west-1c",
+      "public_dns": "ec2-54-123-123-206.us-west-1.compute.amazonaws.com",
+      "private_dns": "ip-10-123-6-12.us-west-1.compute.internal",
+      "public_ip": "54.123.123.206",
+      "private_ip": "10.123.6.12",
+      "ssh_key_name": "survly",
+      "ssh_host_rsa_key_fingerprint": "ac:e7:e1:1f:9c:78:45:22:e7:7a:23:6f:2e:ea:ee:34",
+      "ssh_host_dsa_key_fingerprint": "2d:6e:a3:b4:b1:31:95:5a:59:e3:29:ad:3f:c1:18:9f",
+      "created_at": "2014-02-28T21:45:12+00:00",
+      "architecture": "x86_64",
+      "root_device_type": "instance-store",
+      "install_updates_on_boot": true
+    }
+  ]
+}
