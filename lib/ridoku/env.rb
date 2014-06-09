@@ -68,7 +68,7 @@ module Ridoku
     def push
       $stdout.puts "Pushing current environment..."
 
-      Base.standard_deploy('rails-app',
+      Base.standard_deploy(['rails-app','workers'],
         {
           opsworks_custom_cookbooks: {
             recipes: [
