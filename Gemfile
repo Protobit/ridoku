@@ -1,6 +1,5 @@
 source 'https://rubygems.org'
 ruby '2.1.1'
-#ruby=2.0.0
 #ruby-gemset=ridoku
 
 # OpsWorks control SDK + some IAM stuff.
@@ -11,6 +10,8 @@ gem 'rest-client'
 gem 'rake'
 
 gem 'require_all'
+
+gem 'awesome_print'
 
 # JSON.load for the config file and for processing OpsWorks output.
 gem 'json'

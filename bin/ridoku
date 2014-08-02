@@ -1,10 +1,14 @@
 #!/usr/bin/env ruby
 
-require 'aws'
-require 'logger'
-require 'json'
-require 'getoptlong'
+require 'rubygems'
+require 'bundler'
+Bundler.require(:default)
 
+# add self to libpath
+bin_file = Pathname.new(__FILE__).realpath
+$:.unshift File.expand_path("../../lib", bin_file)
+
+require 'getoptlong'
 require 'io-colorize'
 require 'helpers'
 
