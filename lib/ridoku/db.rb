@@ -127,9 +127,9 @@ examples:
     def set
       load_database
       ARGV.each do |kvpair|
-        kvpair.match(%r((^[^:]+):(.*))) do |m|
+        kvpair.match(%r((^[^:=]+)(:|=)(.*))) do |m|
           key = m[1]
-          value = m[2]
+          value = m[3]
 
           update = dbase.key?(key)
           dbase[key] = value
