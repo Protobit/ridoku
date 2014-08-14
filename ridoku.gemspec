@@ -6,8 +6,8 @@ require 'ridoku/version'
 Gem::Specification.new do |spec|
   spec.name          = "ridoku"
   spec.version       = Ridoku::VERSION
-  spec.authors       = ["Terry Meacham"]
-  spec.email         = ["zv1n.fire@gmail.com"]
+  spec.authors       = ["Terry Meacham","Joel Clay"]
+  spec.email         = ["zv1n.fire@gmail.com","ra3don92@gmail.com"]
   spec.description   = %q{Ridoku: OpsWork management CLI.}
   spec.summary       = %q{Ridoku: OpsWork management CLI.}
   spec.homepage      = "http://ridoku-cli.blogspot.com"

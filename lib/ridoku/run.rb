@@ -27,11 +27,11 @@ module Ridoku
     protected
 
     class << self
-      def create_ssh_path
+      def create_ssh_path(instance = nil)
         Base.fetch_instance
         Base.fetch_account
 
-        instance = Base.select_instances(Base.config[:instances]).first
+        instance ||= Base.select_instances(Base.config[:instances]).first
 
         unless instance
           $stderr.puts 'Unable to find a valid instance.'
