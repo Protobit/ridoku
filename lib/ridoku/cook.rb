@@ -52,7 +52,11 @@ module Ridoku
         true
       end
 
-      def cook_recipe(recipes, custom_json = nil) 
+      def cook_recipe(recipes, custom_json = nil)
+        cook_recipe_on_layers(recipes, nil, custom_json)
+      end
+
+      def cook_recipe_on_layers(recipes, layers, custom_json = nil) 
         Base.fetch_app()
 
         recipes = [recipes] unless recipes.is_a?(Array)
@@ -63,7 +67,7 @@ module Ridoku
           exit 1
         end
 
-        instance_ids = Base.extract_instance_ids
+        instance_ids = Base.extract_instance_ids(layers)
 
         if instance_ids.length == 0
           $stderr.puts 'No valid instances available.'

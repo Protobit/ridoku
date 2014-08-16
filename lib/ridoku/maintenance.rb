@@ -36,7 +36,7 @@ module Ridoku
       Base.custom_json['deploy'][Base.app[:shortname]]['maintenance'] = maint
       Base.save_stack
 
-      Ridoku::Cook.cook_recipe('deploy::maintenance',
+      Ridoku::Cook.cook_recipe_on_layers('deploy::maintenance', ['rails-app'],
         deploy: {
           Base.app[:shortname] => {
             application_type: 'rails'

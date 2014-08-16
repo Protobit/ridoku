@@ -551,8 +551,8 @@ module Ridoku
         end
       end
       
-      def extract_instance_ids
-        Base.fetch_instance(Base.config[:layers] || :all, force: true)
+      def extract_instance_ids(layers = nil)
+        Base.fetch_instance(layers || Base.config[:layers] || :all, force: true)
 
         names = Base.config[:instances] || []
         instances = Base.instances.select do |inst|
