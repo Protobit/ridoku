@@ -18,15 +18,15 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ['lib']
 
-  spec.add_dependency 'aws-sdk'
-  spec.add_dependency 'rugged'
-  spec.add_dependency 'json'
-  spec.add_dependency 'rest-client'
-  spec.add_dependency 'require_all'
-  spec.add_dependency 'activesupport'
-  spec.add_dependency 'activesupport-inflector'
+  spec.add_runtime_dependency 'aws-sdk', '~> 1.50'
+  spec.add_runtime_dependency 'rugged', '~> 0.21'
+  spec.add_runtime_dependency 'json', '~> 1.8'
+  spec.add_runtime_dependency 'rest-client', '~> 1.7'
+  spec.add_runtime_dependency 'require_all', '~> 1.3'
+  spec.add_runtime_dependency 'activesupport', '~> 4.1'
+  spec.add_runtime_dependency 'activesupport-inflector', '~> 0'
 
 
   spec.add_development_dependency "bundler", "~> 1.3"
-  spec.add_development_dependency "rake"
+  spec.add_development_dependency "rake", '~> 0'
 end
