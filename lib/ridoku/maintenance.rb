@@ -55,7 +55,7 @@ module Ridoku
       app_json = Base.custom_json['deploy'][Base.app[:shortname]]
 
       if app_json.key?('maintenance')
-        maint = app_json['maintenance'] == 'true'
+        maint = (app_json['maintenance'] == true)
         $stdout.puts $stdout.colorize((maint ? 'on' : 'off'),
           [:bold, (maint ? :red : :green)])
       else
