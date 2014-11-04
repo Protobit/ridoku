@@ -64,9 +64,10 @@ usage: ridoku [OPTIONS] command [command options]
 
 EOF
   print_commands
-  print_options
 
   if full
+    print_options
+
     $stderr.puts <<-EOF
   #{Ridoku::ConfigWizard.help_text}
 
@@ -289,7 +290,6 @@ begin
 
   unless ENV.key?('AWS_ACCESS_KEY') && ENV.key?('AWS_SECRET_KEY')
     puts 'AWS_ACCESS_KEY and AWS_SECRET_KEY must be specified in your environment.'
-    print_help
     exit 1
   end
 
@@ -300,7 +300,6 @@ begin
     rescue Ridoku::InvalidConfig => e
       $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
       $stderr.puts 'Use the `list` command to see relavent info.'
-      print_help
       exit 1
     end
   end
@@ -336,11 +335,9 @@ begin
   rescue Ridoku::InvalidConfig => e
     $stderr.puts "#{e.error.to_s.capitalize} #{e.type.to_s} specified."
     $stderr.puts 'Use the `list` command to see relavent info.'
-    print_help
     exit 1
   rescue Ridoku::NoSshAccess
     $stderr.puts 'Your user does not have access to ssh on the specified stack.'
-    print_help
     exit 1
   rescue ArgumentError => e
     raise e if Ridoku::Base.config[:debug]
