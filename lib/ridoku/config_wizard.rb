@@ -13,7 +13,7 @@ module Ridoku
     end
 
     def run
-      $stdout.puts $stdout.colorize(help_text, :bold)
+      $stdout.puts $stdout.colorize(ConfigWizard.help_text, :bold)
 
       $stdout.puts "Do you wish to run the wizard now? [#{$stdout.colorize('Y', :bold)}|n]"
       res = $stdin.gets
